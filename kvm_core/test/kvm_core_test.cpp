@@ -1,6 +1,6 @@
 // Copyright 2020 Christopher A. Taylor
 
-#include "core.hpp"
+#include "kvm_core.hpp"
 
 using namespace kvm;
 

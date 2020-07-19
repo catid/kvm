@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(v4l2 LANGUAGES CXX)
+project(kvm_capture LANGUAGES CXX)
 
 
 ################################################################################
@@ -31,8 +31,8 @@ install(FILES ${INCLUDE_FILES} DESTINATION include)
 
 # kvm_capture_test application
 
-add_executable(kvm_capture_test ${SOURCE_FILES})
+add_executable(kvm_capture_test test/kvm_capture_test.cpp)
 target_link_libraries(kvm_capture_test
-    kvm_core
+    kvm_capture
 )
 install(TARGETS kvm_capture_test DESTINATION bin)
