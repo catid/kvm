@@ -1,4 +1,4 @@
-# ![Logo](https://github.com/catid/kvm/raw/master/art/logo.png "Logo") SkyJack
+# ![Logo](https://github.com/catid/kvm/raw/master/art/logo_44.png "Logo") SkyJack
 ### IoT Crash Cart Adapter
 
 This software runs on a Raspberry Pi 4 with an HDMI to USB adapter attached.
