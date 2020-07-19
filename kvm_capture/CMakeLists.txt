@@ -11,7 +11,7 @@ set(INCLUDE_FILES
 
 set(SOURCE_FILES
     ${INCLUDE_FILES}
-    include/kvm_capture.cpp
+    src/kvm_capture.cpp
 )
 
 
@@ -24,7 +24,7 @@ add_library(kvm_capture ${SOURCE_FILES})
 target_include_directories(kvm_capture PUBLIC include)
 target_link_libraries(kvm_capture
     PUBLIC
-        core
+        kvm_core
 )
 install(TARGETS kvm_capture DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)

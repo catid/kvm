@@ -1,3 +1,5 @@
+// Copyright 2020 Christopher A. Taylor
+
 /** \page Logger Logging Module
 
     Feature-rich portable C++ logging subsystem in 650 lines of code.
@@ -41,7 +43,7 @@
 
 #pragma once
 
-#include "core.hpp"
+#include "kvm_core.hpp"
 
 #include <sstream>
 #include <mutex>
@@ -51,7 +53,7 @@
 #include <thread>
 #include <memory>
 
-namespace core {
+namespace kvm {
 namespace logger {
 
 
@@ -117,7 +119,7 @@ char LevelToChar(Level level);
 //------------------------------------------------------------------------------
 // Log Callback
 
-struct QueuedMessage : NoCopy
+struct QueuedMessage
 {
     Level LogLevel;
     const char* ChannelName;
@@ -148,7 +150,7 @@ void SetLogCallback(LogCallback callback);
 //------------------------------------------------------------------------------
 // Buffer
 
-struct LogStringBuffer : NoCopy
+struct LogStringBuffer
 {
     const char* ChannelName;
     Level LogLevel;
@@ -184,7 +186,7 @@ CORE_INLINE void LogStringize(LogStringBuffer& buffer, const bool& first)
 //------------------------------------------------------------------------------
 // OutputWorker
 
-class OutputWorker : NoCopy
+class OutputWorker
 {
     /// Singleton pattern
     explicit OutputWorker();
@@ -260,7 +262,7 @@ protected:
 
 /// Logging channel object: Each instance is given a channel name, and then the
 /// logging channel is used to output log messages.
-class Channel : NoCopy
+class Channel
 {
 public:
     /// Specify channel name and minimum output level (Level::Silent for silent)
@@ -385,4 +387,4 @@ CORE_INLINE void Stop()
 
 
 } // namespace logger
-} // namespace core
+} // namespace kvm

@@ -1,6 +1,6 @@
-#include "core_serializer.hpp"
+#include "kvm_serializer.hpp"
 
-namespace core {
+namespace kvm {
 
 
 //------------------------------------------------------------------------------
@@ -253,4 +253,4 @@ uint32_t ReadBitStream::Read(int bits)
 }
 
 
-} // namespace core
+} // namespace kvm

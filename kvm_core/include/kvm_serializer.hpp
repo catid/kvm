@@ -1,9 +1,15 @@
+// Copyright 2020 Christopher A. Taylor
+
+/*
+    Binary serialization tools
+*/
+
 #pragma once
 
 #include "kvm_core.hpp"
 #include <string.h>
 
-namespace core {
+namespace kvm {
 
 
 //------------------------------------------------------------------------------
@@ -542,4 +548,4 @@ struct ReadBitStream
 };
 
 
-} // namespace core
+} // namespace kvm

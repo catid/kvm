@@ -5,7 +5,7 @@
 #endif
 
 
-namespace core {
+namespace kvm {
 namespace logger {
 
 
@@ -338,7 +338,7 @@ void Channel::SetPrefix(const std::string& prefix)
 
 
 } // namespace logger
-} // namespace core
+} // namespace kvm
 
 
 // Fix hang on shutdown due to MSVCRT bug prior to version 2015

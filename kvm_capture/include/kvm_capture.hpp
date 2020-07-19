@@ -4,7 +4,7 @@
     Core tools used by multiple KVM sub-projects
 */
 
-#include "core.hpp"
+#include "kvm_core.hpp"
 
 namespace kvm {
 

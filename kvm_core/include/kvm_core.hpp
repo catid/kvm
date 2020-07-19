@@ -4,6 +4,8 @@
     Core tools used by multiple KVM sub-projects
 */
 
+#pragma once
+
 #include <cstdint>      // uint8_t etc types
 #include <cstring>
 #include <memory>       // std::unique_ptr, std::shared_ptr

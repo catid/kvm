@@ -1,6 +1,7 @@
 // Copyright 2020 Christopher A. Taylor
 
 #include "kvm_core.hpp"
+#include "kvm_serializer.hpp"
 
 #if !defined(_WIN32)
     #include <pthread.h>
@@ -28,6 +29,7 @@
 #include <fstream> // ofstream
 #include <iomanip> // setw, setfill
 #include <cctype>
+#include <sstream>
 
 namespace kvm {
 
