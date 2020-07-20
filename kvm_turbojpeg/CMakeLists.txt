@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(turbojpeg LANGUAGES CXX)
+project(kvm_turbojpeg LANGUAGES CXX)
 
 
 ################################################################################
