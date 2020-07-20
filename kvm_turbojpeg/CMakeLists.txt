@@ -3,6 +3,18 @@ project(turbojpeg LANGUAGES CXX)
 
 
 ################################################################################
+# Dependencies
+
+# sudo apt install libturbojpeg0-dev
+
+find_library(TJ_LIB REQUIRED
+    NAMES
+        turbojpeg
+)
+message("TJ_LIB: ${TJ_LIB}")
+
+
+################################################################################
 # Source
 
 set(INCLUDE_FILES
@@ -25,6 +37,7 @@ target_include_directories(kvm_turbojpeg PUBLIC include)
 target_link_libraries(kvm_turbojpeg
     PUBLIC
         kvm_core
+        ${TJ_LIB}
 )
 install(TARGETS kvm_turbojpeg DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)
@@ -33,6 +46,7 @@ install(FILES ${INCLUDE_FILES} DESTINATION include)
 
 add_executable(kvm_turbojpeg_test test/kvm_turbojpeg_test.cpp)
 target_link_libraries(kvm_turbojpeg_test
+    kvm_turbojpeg
     kvm_capture
 )
 install(TARGETS kvm_turbojpeg_test DESTINATION bin)

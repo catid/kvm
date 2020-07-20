@@ -148,4 +148,11 @@ inline void SafeCopyCStr(char* dest, size_t destBytes, const char* src)
 }
 
 
+//------------------------------------------------------------------------------
+// Aligned Allocation
+
+uint8_t* AlignedAllocate(size_t size);
+void AlignedFree(void* p);
+
+
 } // namespace kvm

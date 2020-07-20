@@ -237,4 +237,36 @@ std::string HexDump(const uint8_t* data, int bytes)
 }
 
 
+//------------------------------------------------------------------------------
+// Aligned Allocation
+
+static const unsigned kAlignBytes = 32;
+
+uint8_t* AlignedAllocate(size_t size)
+{
+    uint8_t* data = (uint8_t*)malloc(kAlignBytes + size);
+    if (!data) {
+        return nullptr;
+    }
+    unsigned offset = (unsigned)((uintptr_t)data % kAlignBytes);
+    data += kAlignBytes - offset;
+    data[-1] = (uint8_t)offset;
+    return data;
+}
+
+void AlignedFree(void* p)
+{
+    if (!p) {
+        return;
+    }
+    uint8_t* data = (uint8_t*)p;
+    unsigned offset = data[-1];
+    if (offset > kAlignBytes) {
+        return;
+    }
+    data -= kAlignBytes - offset;
+    free(data);
+}
+
+
 } // namespace kvm

@@ -1,6 +1,7 @@
 // Copyright 2020 Christopher A. Taylor
 
 #include "kvm_capture.hpp"
+#include "kvm_logger.hpp"
 
 #include <poll.h>
 #include <errno.h>
@@ -11,8 +12,6 @@
 #include <sys/stat.h>
 
 #include <sstream>
-
-#include "kvm_logger.hpp"
 
 namespace kvm {
 
