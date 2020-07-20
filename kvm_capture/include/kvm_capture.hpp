@@ -6,6 +6,8 @@
 
 #include "kvm_core.hpp"
 
+#include <linux/videodev2.h>
+
 namespace kvm {
 
 
@@ -14,6 +16,18 @@ namespace kvm {
 
 #define KVM_VIDEO_DEVICE "/dev/video0"
 
+static const unsigned kCameraBufferCount = 8;
+
+
+//------------------------------------------------------------------------------
+// Tools
+
+// Convert errno to string
+std::string errno_str();
+
+// Retry ioctls until they succeed
+int safe_ioctl(int fd, unsigned request, void* arg);
+
 
 //------------------------------------------------------------------------------
 // V4L2
@@ -21,10 +35,18 @@ namespace kvm {
 class V4L2Capture
 {
 public:
+    ~V4L2Capture()
+    {
+        Shutdown();
+    }
+
     bool Initialize();
     void Shutdown();
 
 protected:
+    int fd = -1;
+
+    bool RequestBuffers(unsigned count);
 };
 
 

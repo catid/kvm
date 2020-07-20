@@ -77,10 +77,16 @@ public:
         Func = func;
     }
     ~ScopedFunction() {
-        Func();
+        if (Func) {
+            Func();
+        }
     }
 
     std::function<void()> Func;
+
+    void Cancel() {
+        Func = std::function<void()>();
+    }
 };
 
 /// Join a std::shared_ptr<std::thread>
