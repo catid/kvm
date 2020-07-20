@@ -104,7 +104,7 @@ enum class Level
     Trace,   ///< Trace-level logging (off by default)
     Debug,   ///< Debug logging (on by default)
     Info,    ///< Info (normal) logging
-    Warning, ///< Warnings
+    Warn,    ///< Warn
     Error,   ///< Errors
     Silent,  ///< Silent level (always off)
 
@@ -311,11 +311,11 @@ public:
 #endif // LOGGER_NEVER_DROP
     }
 
-    /// Log a Warning level message
+    /// Log a Warn level message
     template<typename... Args>
-    CORE_INLINE void Warning(Args&&... args) const
+    CORE_INLINE void Warn(Args&&... args) const
     {
-        Log(Level::Warning, std::forward<Args>(args)...);
+        Log(Level::Warn, std::forward<Args>(args)...);
     }
 
     /// Log an Info level message

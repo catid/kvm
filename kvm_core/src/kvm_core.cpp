@@ -160,6 +160,15 @@ void SetCurrentThreadName(const char* threadName)
 }
 #endif
 
+void ThreadSleepForMsec(int msec)
+{
+#ifdef _WIN32
+    ::Sleep(msec);
+#else
+    ::usleep(msec * 1000);
+#endif
+}
+
 
 //------------------------------------------------------------------------------
 // String Conversion

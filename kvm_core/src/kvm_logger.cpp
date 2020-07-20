@@ -270,7 +270,7 @@ void OutputWorker::Log(QueuedMessage& message)
     ss << '{' << LevelToChar(message.LogLevel);
     if (message.LogLevel == Level::Error) {
         ss << "-ERR"; // Make errors searchable
-    } else if (message.LogLevel == Level::Warning) {
+    } else if (message.LogLevel == Level::Warn) {
         ss << "-WARN"; // Make warnings searchable
     }
     ss << '-' << message.ChannelName << "} " << message.Message;

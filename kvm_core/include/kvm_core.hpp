@@ -119,6 +119,9 @@ uint64_t GetTimeMsec();
 /// Set the current thread name
 void SetCurrentThreadName(const char* name);
 
+/// Sleep for a number of milliseconds
+void ThreadSleepForMsec(int msec);
+
 
 //------------------------------------------------------------------------------
 // String Conversion
