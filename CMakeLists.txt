@@ -37,12 +37,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 ################################################################################
 # Targets
 
-if(NOT TARGET kvm_core)
-    add_subdirectory(kvm_core)
-endif()
-if(NOT TARGET kvm_capture)
-    add_subdirectory(kvm_capture)
-endif()
-if(NOT TARGET mmal)
-    #add_subdirectory(extern)
-endif()
+add_subdirectory(kvm_core)
+add_subdirectory(kvm_capture)
+add_subdirectory(extern)
+add_subdirectory(turbojpeg)

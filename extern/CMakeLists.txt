@@ -1,2 +1,4 @@
 cmake_minimum_required(VERSION 3.5)
-project(thirdparty LANGUAGES CXX)
+project(extern LANGUAGES CXX)
+
+add_subdirectory(brcmjpeg)
