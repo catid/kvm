@@ -42,7 +42,7 @@ static logger::Channel Logger("Convert");
     Y' = (uint8_t)( Y * 219 * scale + 0.5 ) + 16
     U' = (uint8_t)( round(224 * U * scale) + 128 )
 */
-void Convert_JPEG_YUV422_To_BT709_YUV420(uint8_t* planes[3], int w, int stride[3], int h)
+void Convert_YUVJ422_To_BT709_YUV420(const std::shared_ptr<Frame>& frame)
 {
     // FIXME
 }

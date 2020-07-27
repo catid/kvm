@@ -14,6 +14,7 @@ find_package(Threads REQUIRED)
 
 set(INCLUDE_FILES
     include/kvm_core.hpp
+    include/kvm_frame.hpp
     include/kvm_logger.hpp
     include/kvm_serializer.hpp
 )
@@ -21,6 +22,7 @@ set(INCLUDE_FILES
 set(SOURCE_FILES
     ${INCLUDE_FILES}
     src/kvm_core.cpp
+    src/kvm_frame.cpp
     src/kvm_logger.cpp
     src/kvm_serializer.cpp
 )

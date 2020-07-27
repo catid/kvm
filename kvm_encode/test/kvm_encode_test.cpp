@@ -45,7 +45,7 @@ int main(int argc, char* argv[])
         Logger.Info("Decoding JPEG took ", dt / 1000.f, " msec");
 
         int bytes = 0;
-        uint8_t* data = encoder.Encode(bytes);
+        uint8_t* data = encoder.Encode(frame->Planes[0], bytes);
 
         decoder.Release(frame);
     })) {

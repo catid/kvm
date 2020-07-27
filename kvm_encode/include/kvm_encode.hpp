@@ -33,13 +33,17 @@ public:
         Shutdown();
     }
 
-    bool Initialize();
+    bool Initialize(int width, int height, int kbps = 4000, int fps = 30, int gop = 6);
     void Shutdown();
 
-    uint8_t* Encode(int& bytes);
+    uint8_t* Encode(uint8_t* yuv422p, int& bytes);
 
 protected:
     MMAL_WRAPPER_T* Encoder = nullptr;
+    int Width = 0, Height = 0;
+
+    MMAL_PORT_T* PortIn = nullptr;
+    MMAL_PORT_T* PortOut = nullptr;
 
     std::vector<uint8_t> Data;
 };

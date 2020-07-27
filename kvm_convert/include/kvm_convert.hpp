@@ -7,6 +7,7 @@
 #pragma once
 
 #include "kvm_core.hpp"
+#include "kvm_frame.hpp"
 
 namespace kvm {
 
@@ -15,7 +16,7 @@ namespace kvm {
 // Convert
 
 // Convert from JPEG colorspace YUV422 -> YUV420 BT.709
-void Convert_JPEG_YUV422_To_BT709_YUV420(uint8_t* planes[3], int w, int stride[3], int h);
+void Convert_YUVJ422_To_BT709_YUV420(const std::shared_ptr<Frame>& frame);
 
 
 } // namespace kvm

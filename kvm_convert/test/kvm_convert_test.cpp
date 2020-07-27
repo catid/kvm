@@ -40,20 +40,9 @@ int main(int argc, char* argv[])
             return;
         }
 
-        uint8_t* planes[3] = {
-            frame->Planes[0].Plane,
-            frame->Planes[1].Plane,
-            frame->Planes[2].Plane
-        };
-        int strides[3] = {
-            frame->Planes[0].Stride,
-            frame->Planes[1].Stride,
-            frame->Planes[2].Stride
-        };
-
         uint64_t t1 = GetTimeUsec();
 
-        Convert_JPEG_YUV422_To_BT709_YUV420(planes, frame->Planes[0].Width, strides, frame->Planes[0].Height);
+        Convert_JPEG_YUV422_To_BT709_YUV420(frame);
 
         uint64_t t2 = GetTimeUsec();
 
