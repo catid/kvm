@@ -22,6 +22,9 @@ enum class PixelFormat
 {
     YUV420P,
     YUV422P,
+    YUYV,
+    NV12,
+    RGB24,
 };
 
 

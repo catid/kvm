@@ -11,7 +11,26 @@ static logger::Channel Logger("Capture");
 //------------------------------------------------------------------------------
 // Tools
 
+static bool m_sem_init = false;
 static VCOS_SEMAPHORE_T m_encoder_sem{};
+
+static bool mmalInit()
+{
+    if (m_sem_init) {
+        return true;
+    }
+    m_sem_init = true;
+
+    bcm_host_init();
+
+    int r = vcos_semaphore_create(&m_encoder_sem, "encoder sem", 0);
+    if (r != VCOS_SUCCESS) {
+        Logger.Error("vcos_semaphore_create failed: ", r);
+        return false;
+    }
+
+    return true;
+}
 
 static void mmalCallback(MMAL_WRAPPER_T* encoder)
 {
@@ -22,20 +41,20 @@ static void mmalCallback(MMAL_WRAPPER_T* encoder)
 //------------------------------------------------------------------------------
 // MmalEncoder
 
-bool MmalEncoder::Initialize(int width, int height, int kbps, int fps, int gop)
+bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps, int fps, int gop)
 {
+    ScopedFunction fail_scope([this]() {
+        Shutdown();
+    });
+
     Width = width;
     Height = height;
 
-    bcm_host_init();
-
-    int r = vcos_semaphore_create(&m_encoder_sem, "encoder sem", 0);
-    if (r != VCOS_SUCCESS) {
-        Logger.Error("vcos_semaphore_create failed: ", r);
+    if (!mmalInit()) {
         return false;
     }
 
-    r = mmal_wrapper_create(&Encoder, MMAL_COMPONENT_DEFAULT_IMAGE_ENCODER);
+    int r = mmal_wrapper_create(&Encoder, MMAL_COMPONENT_DEFAULT_IMAGE_ENCODER);
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_wrapper_create failed: ", r);
         return false;
@@ -51,15 +70,17 @@ bool MmalEncoder::Initialize(int width, int height, int kbps, int fps, int gop)
         }
     }
 
-    PortIn->format->type = MMAL_ES_TYPE_VIDEO;
-    PortIn->format->encoding = MMAL_ENCODING_I422;
+    //PortIn->format->type = MMAL_ES_TYPE_VIDEO;
+    PortIn->format->encoding = input_encoding;
     PortIn->format->es->video.width = VCOS_ALIGN_UP(width, 32);
     PortIn->format->es->video.height = VCOS_ALIGN_UP(height, 16);
     PortIn->format->es->video.crop.x = 0;
     PortIn->format->es->video.crop.y = 0;
     PortIn->format->es->video.crop.width = width;
     PortIn->format->es->video.crop.height = height;
-    PortIn->format->flags = MMAL_ES_FORMAT_FLAG_FRAMED;
+    //PortIn->format->flags = MMAL_ES_FORMAT_FLAG_FRAMED;
+    PortIn->buffer_size = PortIn->buffer_size_recommended;
+    PortIn->buffer_num = PortIn->buffer_num_recommended;
 
     r = mmal_port_format_commit(PortIn);
     if (r != MMAL_SUCCESS) {
@@ -67,10 +88,11 @@ bool MmalEncoder::Initialize(int width, int height, int kbps, int fps, int gop)
         return false;
     }
 
-    mmal_port_parameter_set_uint32(PortIn, MMAL_PARAMETER_ZERO_COPY, 1);
-
-    PortIn->buffer_size = PortIn->buffer_size_recommended;
-    PortIn->buffer_num = PortIn->buffer_num_recommended;
+    r = mmal_port_parameter_set_boolean(PortIn, MMAL_PARAMETER_ZERO_COPY, MMAL_TRUE);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_boolean PortIn failed: ", r);
+        return false;
+    }
 
     r = mmal_wrapper_port_enable(PortIn, MMAL_WRAPPER_FLAG_PAYLOAD_ALLOCATE);
     if (r != MMAL_SUCCESS) {
@@ -87,10 +109,14 @@ bool MmalEncoder::Initialize(int width, int height, int kbps, int fps, int gop)
         }
     }
 
-    PortOut->format->type = MMAL_ES_TYPE_VIDEO;
+    //PortOut->format->type = MMAL_ES_TYPE_VIDEO;
     PortOut->format->encoding = MMAL_ENCODING_H264;
-    PortOut->format->encoding_variant = MMAL_ENCODING_VARIANT_H264_DEFAULT; // AnnexB
+    //PortOut->format->encoding_variant = MMAL_ENCODING_VARIANT_H264_DEFAULT; // AnnexB
     PortOut->format->bitrate = kbps;
+    PortOut->format->es->video.frame_rate.num = fps;
+    PortOut->format->es->video.frame_rate.den = 1;
+    PortIn->buffer_size = PortIn->buffer_size_recommended;
+    PortIn->buffer_num = PortIn->buffer_num_recommended;
 
     r = mmal_port_format_commit(PortOut);
     if (r != MMAL_SUCCESS) {
@@ -98,16 +124,26 @@ bool MmalEncoder::Initialize(int width, int height, int kbps, int fps, int gop)
         return false;
     }
 
-    int fail = 0;
-
-    // FIXME
-    fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_ZERO_COPY, 1);
-
+    MMAL_PARAMETER_VIDEO_PROFILE_T profile;
+    profile.hdr.id = MMAL_PARAMETER_PROFILE;
+    profile.hdr.size = sizeof(profile);
     // MMAL_VIDEO_PROFILE_H264_CONSTRAINED_BASELINE
     // MMAL_VIDEO_PROFILE_H264_BASELINE
     // MMAL_VIDEO_PROFILE_H264_MAIN
     // MMAL_VIDEO_PROFILE_H264_HIGH
-    fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_PROFILE, MMAL_VIDEO_PROFILE_H264_MAIN);
+    profile.profile[0].profile = MMAL_VIDEO_PROFILE_H264_BASELINE;
+    profile.profile[0].level = MMAL_VIDEO_LEVEL_H264_4; // Supports 1080p
+
+    r = mmal_port_parameter_set(PortOut, &profile.hdr);
+    if (r != MMAL_SUCCESS)	{
+        Logger.Error("mmal_port_parameter_set profile failed: ", r);
+        return false;
+    }
+
+    int fail = 0;
+
+    // FIXME
+    fail |= mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_ZERO_COPY, MMAL_TRUE);
 
     // GOP size = 6
     fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_INTRAPERIOD, gop);
@@ -191,6 +227,7 @@ bool MmalEncoder::Initialize(int width, int height, int kbps, int fps, int gop)
 
     Encoder->callback = mmalCallback;
 
+    fail_scope.Cancel();
     return true;
 }
 
@@ -204,6 +241,35 @@ void MmalEncoder::Shutdown()
 
 uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, int& bytes)
 {
+    if (!Encoder) {
+        const int kbps = 4000;
+        const int fps = 30;
+        const int gop = 6;
+        int input_encoding = 0;
+        if (frame->Format == PixelFormat::YUV422P) {
+            input_encoding = MMAL_ENCODING_I422;
+        } else if (frame->Format == PixelFormat::YUV420P) {
+            input_encoding = MMAL_ENCODING_I420;
+        } else if (frame->Format == PixelFormat::YUYV) {
+            input_encoding = MMAL_ENCODING_YUYV;
+        } else if (frame->Format == PixelFormat::NV12) {
+            input_encoding = MMAL_ENCODING_NV12;
+        } else if (frame->Format == PixelFormat::RGB24) {
+            input_encoding = MMAL_ENCODING_RGB24;
+        } else {
+            Logger.Error("Unsupported format");
+            return nullptr;
+        }
+
+        // FIXME: REMOVE THIS!
+        input_encoding = MMAL_ENCODING_I420;
+
+        if (!Initialize(frame->Width, frame->Height, input_encoding, kbps, fps, gop)) {
+            Logger.Error("Initialize failed");
+            return nullptr;
+        }
+    }
+
     Data.resize(0);
 
     int r;

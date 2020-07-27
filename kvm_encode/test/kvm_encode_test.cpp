@@ -8,6 +8,8 @@ using namespace kvm;
 
 static logger::Channel Logger("TurboJpegTest");
 
+#include <exception>
+
 #include <csignal>
 #include <atomic>
 std::atomic<bool> Terminated = ATOMIC_VAR_INIT(false);
@@ -65,6 +67,8 @@ int main(int argc, char* argv[])
     }
 
     Logger.Info("Shutting down...");
+
+    std::terminate();
 
     capture.Shutdown();
 

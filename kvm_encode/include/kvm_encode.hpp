@@ -34,7 +34,7 @@ public:
         Shutdown();
     }
 
-    bool Initialize(int width, int height, int kbps = 4000, int fps = 30, int gop = 6);
+    bool Initialize(int width, int height, int input_encoding, int kbps = 4000, int fps = 30, int gop = 6);
     void Shutdown();
 
     uint8_t* Encode(const std::shared_ptr<Frame>& frame, int& bytes);
