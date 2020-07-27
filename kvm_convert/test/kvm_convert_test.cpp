@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
 
         uint64_t t1 = GetTimeUsec();
 
-        Convert_JPEG_YUV422_To_BT709_YUV420(frame);
+        Convert_YUVJ422_To_BT709_YUV420(frame);
 
         uint64_t t2 = GetTimeUsec();
 

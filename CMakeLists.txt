@@ -96,6 +96,14 @@ find_library(VCOS_LIB REQUIRED
 )
 message("VCOS_LIB: ${VCOS_LIB}")
 
+find_library(BCM_HOST_LIB REQUIRED
+    NAMES
+        bcm_host
+    HINTS
+        /opt/vc/lib/
+)
+message("BCM_HOST_LIB: ${BCM_HOST_LIB}")
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 

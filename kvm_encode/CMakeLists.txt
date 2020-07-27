@@ -31,6 +31,10 @@ target_link_libraries(kvm_encode
     PUBLIC
         kvm_core
         ${MMAL_LIB}
+        ${MMAL_CORE_LIB}
+        ${MMAL_UTIL_LIB}
+        ${VCOS_LIB}
+        ${BCM_HOST_LIB}
 )
 install(TARGETS kvm_encode DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)
