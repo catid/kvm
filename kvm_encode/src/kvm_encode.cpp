@@ -41,7 +41,7 @@ bool MmalEncoder::Initialize(int width, int height, int kbps, int fps, int gop)
         return false;
     }
 
-    MMAL_PORT_T* PortIn = Encoder->input[0];
+    PortIn = Encoder->input[0];
     Encoder->status = MMAL_SUCCESS;
 
     if (PortIn->is_enabled) {
@@ -202,14 +202,17 @@ void MmalEncoder::Shutdown()
     }
 }
 
-uint8_t* MmalEncoder::Encode(uint8_t* yuv422p, int& bytes)
+uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, int& bytes)
 {
     Data.resize(0);
 
     int r;
     bool eos = false, sent = false;
 
-    while (!eos) {
+    while (!eos)
+    {
+        Logger.Info("PortOut");
+
         MMAL_BUFFER_HEADER_T* out = nullptr;
         while (mmal_wrapper_buffer_get_empty(PortOut, &out, 0) == MMAL_SUCCESS) {
             r = mmal_port_send_buffer(PortOut, out);
@@ -219,9 +222,11 @@ uint8_t* MmalEncoder::Encode(uint8_t* yuv422p, int& bytes)
             }
         }
 
+        Logger.Info("PortIn");
+
         MMAL_BUFFER_HEADER_T* in = nullptr;
         if (!sent && mmal_wrapper_buffer_get_empty(PortIn, &in, 0) == MMAL_SUCCESS) {
-            in->data = yuv422p;
+            in->data = frame->Planes[0];
             in->length = in->alloc_size = Width * Height * 2;
             in->offset = 0;
             in->flags = MMAL_BUFFER_HEADER_FLAG_EOS;

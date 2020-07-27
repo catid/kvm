@@ -39,15 +39,20 @@ int main(int argc, char* argv[])
             Logger.Error("Failed to decode JPEG");
             return;
         }
+        ScopedFunction frame_scope([&]() {
+            decoder.Release(frame);
+        });
 
         uint64_t t1 = GetTimeUsec();
         int64_t dt = t1 - t0;
         Logger.Info("Decoding JPEG took ", dt / 1000.f, " msec");
 
         int bytes = 0;
-        uint8_t* data = encoder.Encode(frame->Planes[0], bytes);
-
-        decoder.Release(frame);
+        uint8_t* data = encoder.Encode(frame, bytes);
+        if (!data) {
+            Logger.Error("Encode failed");
+            return;
+        }
     })) {
         Logger.Error("Failed to start capture");
         return kAppFail;

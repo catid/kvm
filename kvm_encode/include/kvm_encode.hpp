@@ -7,6 +7,7 @@
 #pragma once
 
 #include "kvm_core.hpp"
+#include "kvm_frame.hpp"
 
 #include <memory>
 #include <vector>
@@ -36,7 +37,7 @@ public:
     bool Initialize(int width, int height, int kbps = 4000, int fps = 30, int gop = 6);
     void Shutdown();
 
-    uint8_t* Encode(uint8_t* yuv422p, int& bytes);
+    uint8_t* Encode(const std::shared_ptr<Frame>& frame, int& bytes);
 
 protected:
     MMAL_WRAPPER_T* Encoder = nullptr;
