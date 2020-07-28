@@ -9,6 +9,7 @@ using namespace kvm;
 static logger::Channel Logger("H264EncodeTest");
 
 #include <exception>
+#include <fstream>
 
 #include <csignal>
 #include <atomic>
@@ -30,6 +31,12 @@ int main(int argc, char* argv[])
     V4L2Capture capture;
     TurboJpegDecoder decoder;
     MmalEncoder encoder;
+
+    std::ofstream file("output.h264");
+    if (!file) {
+        Logger.Error("Failed to open output file: output.h264");
+        return kAppFail;
+    }
 
     if (!capture.Initialize([&](const std::shared_ptr<CameraFrame>& buffer) {
         Logger.Info("Got frame #", buffer->FrameNumber, " bytes = ", buffer->ImageBytes);
@@ -62,6 +69,8 @@ int main(int argc, char* argv[])
             Logger.Error("Encode failed");
             return;
         }
+
+        file.write((char*)data, bytes);
     })) {
         Logger.Error("Failed to start capture");
         return kAppFail;

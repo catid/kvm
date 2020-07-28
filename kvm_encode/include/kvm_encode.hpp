@@ -2,6 +2,9 @@
 
 /*
     MMAL Encoder for Raspberry Pi
+
+    References:
+    https://www.itu.int/rec/T-REC-H.264
 */
 
 #pragma once
@@ -34,7 +37,7 @@ public:
         Shutdown();
     }
 
-    bool Initialize(int width, int height, int input_encoding, int kbps = 4000, int fps = 30, int gop = 6);
+    bool Initialize(int width, int height, int input_encoding, int kbps, int fps, int gop);
     void Shutdown();
 
     uint8_t* Encode(const std::shared_ptr<Frame>& frame, int& bytes);
