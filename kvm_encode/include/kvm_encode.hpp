@@ -40,7 +40,7 @@ public:
     bool Initialize(int width, int height, int input_encoding, int kbps, int fps, int gop);
     void Shutdown();
 
-    uint8_t* Encode(const std::shared_ptr<Frame>& frame, int& bytes);
+    uint8_t* Encode(const std::shared_ptr<Frame>& frame, bool force_keyframe, int& bytes);
 
 protected:
     MMAL_WRAPPER_T* Encoder = nullptr;

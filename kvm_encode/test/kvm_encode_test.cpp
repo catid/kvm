@@ -58,8 +58,10 @@ int main(int argc, char* argv[])
 
         t0 = GetTimeUsec();
 
+        bool keyframe = buffer->FrameNumber % 2 == 0;
+
         int bytes = 0;
-        uint8_t* data = encoder.Encode(frame, bytes);
+        uint8_t* data = encoder.Encode(frame, keyframe, bytes);
 
         t1 = GetTimeUsec();
         dt = t1 - t0;

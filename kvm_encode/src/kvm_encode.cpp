@@ -242,9 +242,6 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_EEDE_ENABLE, 0);
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_EEDE_LOSSRATE, 0);
 
-    // Do not force I-frame
-    //fail |= mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_REQUEST_I_FRAME, MMAL_FALSE);
-
     // Bitrate
     r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_BIT_RATE, kbps * 1000); // 4 Mbps
     if (r != MMAL_SUCCESS) {
@@ -342,7 +339,7 @@ void MmalEncoder::Shutdown()
     }
 }
 
-uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, int& bytes)
+uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_keyframe, int& bytes)
 {
     if (!Encoder) {
         const int kbps = 4000;
@@ -371,9 +368,19 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, int& bytes)
         Logger.Info("MMAL encoder initialized");
     }
 
+    int r;
+
+    if (force_keyframe) {
+        // Do not force I-frame
+        r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_REQUEST_I_FRAME, MMAL_TRUE);
+        if (r != MMAL_SUCCESS) {
+            Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_VIDEO_REQUEST_I_FRAME failed: ", mmalErrStr(r));
+            return nullptr;
+        }
+    }
+
     Data.resize(0);
 
-    int r;
     bool eos = false, sent = false;
 
     while (!eos)
