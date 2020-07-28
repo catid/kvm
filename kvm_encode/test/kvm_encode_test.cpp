@@ -6,7 +6,7 @@
 #include "kvm_logger.hpp"
 using namespace kvm;
 
-static logger::Channel Logger("TurboJpegTest");
+static logger::Channel Logger("H264EncodeTest");
 
 #include <exception>
 

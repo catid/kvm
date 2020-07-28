@@ -34,7 +34,6 @@ static bool mmalInit()
 
 static void mmalCallback(MMAL_WRAPPER_T* encoder)
 {
-    Logger.Info("CALLBACK");
     vcos_semaphore_post(&m_encoder_sem);
 }
 
@@ -131,7 +130,7 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     PortOut->format->type = MMAL_ES_TYPE_VIDEO;
     PortOut->format->encoding = MMAL_ENCODING_H264;
     PortOut->format->encoding_variant = MMAL_ENCODING_VARIANT_H264_DEFAULT; // AnnexB
-    PortOut->format->bitrate = kbps;
+    PortOut->format->bitrate = kbps * 1000;
     PortOut->format->es->video.frame_rate.num = fps;
     PortOut->format->es->video.frame_rate.den = 1;
     PortOut->buffer_size = PortOut->buffer_size_recommended;
@@ -150,7 +149,7 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     // MMAL_VIDEO_PROFILE_H264_BASELINE
     // MMAL_VIDEO_PROFILE_H264_MAIN
     // MMAL_VIDEO_PROFILE_H264_HIGH
-    profile.profile[0].profile = MMAL_VIDEO_PROFILE_H264_HIGH;
+    profile.profile[0].profile = MMAL_VIDEO_PROFILE_H264_BASELINE;
     profile.profile[0].level = MMAL_VIDEO_LEVEL_H264_4; // Supports 1080p
 
     r = mmal_port_parameter_set(PortOut, &profile.hdr);
@@ -159,8 +158,7 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
         return false;
     }
 
-    // FIXME
-    r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_ZERO_COPY, MMAL_FALSE);
+    r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_ZERO_COPY, MMAL_TRUE);
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_ZERO_COPY failed: ", mmalErrStr(r));
         return false;
@@ -170,21 +168,6 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_INTRAPERIOD, gop);
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_INTRAPERIOD failed: ", mmalErrStr(r));
-        return false;
-    }
-
-    // MMAL_VIDEO_ENCODER_RC_MODEL_JVT
-    // MMAL_VIDEO_ENCODER_RC_MODEL_VOWIFI
-    // MMAL_VIDEO_ENCODER_RC_MODEL_CBR
-    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL, MMAL_VIDEO_ENCODER_RC_MODEL_CBR);
-    if (r != MMAL_SUCCESS) {
-        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL failed: ", mmalErrStr(r));
-        return false;
-    }
-
-    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_RATECONTROL, MMAL_VIDEO_RATECONTROL_CONSTANT);
-    if (r != MMAL_SUCCESS) {
-        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_RATECONTROL failed: ", mmalErrStr(r));
         return false;
     }
 
@@ -210,6 +193,30 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
         return false;
     }
 
+    // Allow input to be modified
+    r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_IMMUTABLE_INPUT, MMAL_FALSE);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_VIDEO_IMMUTABLE_INPUT failed: ", mmalErrStr(r));
+        return false;
+    }
+
+#if 0
+
+    // MMAL_VIDEO_ENCODER_RC_MODEL_JVT
+    // MMAL_VIDEO_ENCODER_RC_MODEL_VOWIFI
+    // MMAL_VIDEO_ENCODER_RC_MODEL_CBR
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL, MMAL_VIDEO_ENCODER_RC_MODEL_CBR);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL failed: ", mmalErrStr(r));
+        return false;
+    }
+
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_RATECONTROL, MMAL_VIDEO_RATECONTROL_CONSTANT);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_RATECONTROL failed: ", mmalErrStr(r));
+        return false;
+    }
+
     // Not sure what this is
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_EEDE_ENABLE, 0);
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_EEDE_LOSSRATE, 0);
@@ -220,15 +227,8 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     // Not sure how to do this
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_INTRA_REFRESH, MMAL_PARAMETER_VIDEO_INTRA_REFRESH_T);
 
-    // Allow input to be modified
-    r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_IMMUTABLE_INPUT, MMAL_FALSE);
-    if (r != MMAL_SUCCESS) {
-        Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_VIDEO_IMMUTABLE_INPUT failed: ", mmalErrStr(r));
-        return false;
-    }
-
     // Bitrate
-    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_BIT_RATE, kbps); // 4 Mbps
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_BIT_RATE, kbps * 1000); // 4 Mbps
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_BIT_RATE failed: ", mmalErrStr(r));
         return false;
@@ -267,15 +267,8 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
         return false;
     }
 
-    // P-frames only
+    // Causes it to hang
     r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_H264_LOW_LATENCY, MMAL_TRUE);
-    if (r != MMAL_SUCCESS) {
-        Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_VIDEO_ENCODE_H264_AU_DELIMITERS failed: ", mmalErrStr(r));
-        return false;
-    }
-
-    // No AUDs
-    r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_H264_AU_DELIMITERS, MMAL_FALSE);
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_VIDEO_ENCODE_H264_AU_DELIMITERS failed: ", mmalErrStr(r));
         return false;
@@ -294,6 +287,15 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     }
 
     // MMAL_PARAMETER_VIDEO_ENCODE_HEADERS_WITH_FRAME reports: Not implemented
+
+#endif
+
+    // No AUDs
+    r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_H264_AU_DELIMITERS, MMAL_FALSE);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_VIDEO_ENCODE_H264_AU_DELIMITERS failed: ", mmalErrStr(r));
+        return false;
+    }
 
     Encoder->callback = mmalCallback;
 
@@ -359,7 +361,6 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, int& bytes)
     {
         MMAL_BUFFER_HEADER_T* out = nullptr;
         while (mmal_wrapper_buffer_get_empty(PortOut, &out, 0) == MMAL_SUCCESS) {
-            Logger.Info("mmal_port_send_buffer PortOut");
             r = mmal_port_send_buffer(PortOut, out);
             if (r != MMAL_SUCCESS) {
                 Logger.Error("mmal_port_send_buffer PortOut failed: ", mmalErrStr(r));
@@ -369,7 +370,6 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, int& bytes)
 
         MMAL_BUFFER_HEADER_T* in = nullptr;
         if (!sent && mmal_wrapper_buffer_get_empty(PortIn, &in, 0) == MMAL_SUCCESS) {
-            Logger.Info("mmal_port_send_buffer PortIn");
             in->data = frame->Planes[0];
             if (frame->Format == PixelFormat::YUV422P) {
                 in->length = in->alloc_size = Width * Height * 2;
@@ -390,7 +390,6 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, int& bytes)
 
         r = mmal_wrapper_buffer_get_full(PortOut, &out, 0);
         if (r == MMAL_EAGAIN) {
-            Logger.Info("MMAL_EAGAIN");
             vcos_semaphore_wait(&m_encoder_sem);
             continue;
         }
