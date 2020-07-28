@@ -2,6 +2,9 @@
 
 /*
     C++ Wrapper around turbojpeg
+
+    Reference:
+    https://github.com/libjpeg-turbo/libjpeg-turbo/blob/master/turbojpeg.h
 */
 
 #pragma once

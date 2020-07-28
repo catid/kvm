@@ -5,7 +5,7 @@
 
 namespace kvm {
 
-static logger::Channel Logger("Capture");
+static logger::Channel Logger("Frame");
 
 
 //------------------------------------------------------------------------------
@@ -26,6 +26,16 @@ Frame::~Frame()
 //------------------------------------------------------------------------------
 // FramePool
 
+static int RoundUp32(int x)
+{
+    return (x + 31) & ~31;
+}
+
+static int RoundUp16(int x)
+{
+    return (x + 15) & ~15;
+}
+
 std::shared_ptr<Frame> FramePool::Allocate(int w, int h, PixelFormat format)
 {
     // Check if we can use one from the pool:
@@ -40,9 +50,17 @@ std::shared_ptr<Frame> FramePool::Allocate(int w, int h, PixelFormat format)
 
     auto frame = std::make_shared<Frame>();
 
-    frame->Width = w;
-    frame->Height = h;
+    // Designed for ingest into MMAL encoder
+    // TBD: Should these be byte alignments instead of resolution?
+    frame->Width = RoundUp32(w);
+    frame->Height = RoundUp16(h);
     frame->Format = format;
+
+    if (format == PixelFormat::RGB24) {
+        frame->Planes[0] = AlignedAllocate(frame->Width * frame->Height * 3);
+        frame->Planes[1] = frame->Planes[2] = nullptr;
+        return frame;
+    }
 
     int y_plane_bytes = w * h, uv_plane_bytes = 0;
     if (format == PixelFormat::YUV420P) {
@@ -52,13 +70,13 @@ std::shared_ptr<Frame> FramePool::Allocate(int w, int h, PixelFormat format)
         uv_plane_bytes = y_plane_bytes / 2;
     }
     else {
+        Logger.Error("FIXME: Unsupported format");
         return nullptr;
     }
 
     frame->Planes[0] = AlignedAllocate(y_plane_bytes + uv_plane_bytes * 2);
     frame->Planes[1] = frame->Planes[0] + y_plane_bytes;
     frame->Planes[2] = frame->Planes[1] + uv_plane_bytes;
-
     return frame;
 }
 

@@ -49,8 +49,15 @@ int main(int argc, char* argv[])
         int64_t dt = t1 - t0;
         Logger.Info("Decoding JPEG took ", dt / 1000.f, " msec");
 
+        t0 = GetTimeUsec();
+
         int bytes = 0;
         uint8_t* data = encoder.Encode(frame, bytes);
+
+        t1 = GetTimeUsec();
+        dt = t1 - t0;
+        Logger.Info("Encoding H264 took ", dt / 1000.f, " msec");
+
         if (!data) {
             Logger.Error("Encode failed");
             return;

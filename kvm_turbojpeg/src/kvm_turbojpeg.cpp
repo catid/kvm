@@ -38,6 +38,8 @@ std::shared_ptr<Frame> TurboJpegDecoder::Decompress(const uint8_t* data, int byt
         return nullptr;
     }
 
+#if 0 // Faster but more complex:
+
     PixelFormat format;
     if (subsamp == TJSAMP_420) {
         format = PixelFormat::YUV420P;
@@ -75,6 +77,31 @@ std::shared_ptr<Frame> TurboJpegDecoder::Decompress(const uint8_t* data, int byt
         Logger.Error("tjDecompressToYUVPlanes failed");
         return nullptr;
     }
+
+#else // RGB:
+
+    auto frame = Pool.Allocate(w, h, PixelFormat::RGB24);
+    if (!frame) {
+        Logger.Error("Allocate failed");
+        return nullptr;
+    }
+
+    r = tjDecompress2(
+        Handle,
+        (uint8_t*)data,
+        bytes,
+        frame->Planes[0],
+        w,
+        w*3,
+        h,
+        TJPF_RGB,
+        TJFLAG_ACCURATEDCT);
+    if (r != 0) {
+        Logger.Error("tjDecompressToYUVPlanes failed");
+        return nullptr;
+    }
+
+#endif
 
     return frame;
 }
