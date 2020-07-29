@@ -13,7 +13,7 @@ namespace kvm {
 // Constants
 
 #define KVM_HW_RNG "/dev/hwrng"
-#define KVM_FALLBACK_RNG "/dev/urandom"
+#define KVM_MIX_RNG "/dev/urandom"
 
 
 //------------------------------------------------------------------------------

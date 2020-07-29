@@ -3,6 +3,8 @@
 #include "kvm_crypto.hpp"
 #include "kvm_logger.hpp"
 
+#include "blake3.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -57,17 +59,34 @@ static int read_file(const char* path, uint8_t* buffer, int bytes)
 //------------------------------------------------------------------------------
 // Random
 
+// Prevent compiler from optimizing out memset()
+static void secure_zero_memory(void* v, size_t n)
+{
+    volatile uint8_t* p = (volatile uint8_t*)v;
+
+    for (size_t i = 0; i < n; ++i) {
+        p[i] = 0;
+    }
+}
+
 void FillRandom(void* data, int bytes)
 {
-    int written = read_file(KVM_HW_RNG, (uint8_t*)data, bytes);
-    if (written < bytes) {
-        Logger.Warn("Only read ", written, " of ", bytes, " bytes from ", KVM_HW_RNG);
-        bytes -= written;
-        written = read_file(KVM_FALLBACK_RNG, (uint8_t*)data + written, bytes);
-        if (written < bytes) {
-            Logger.Error("Only read ", written, " of ", bytes, " bytes from ", KVM_FALLBACK_RNG);
-        }
-    }
+    blake3_hasher hasher;
+    uint8_t key[64] = {};
+
+    // Wipe stack memory before leaving
+    ScopedFunction clean_scope([&]() {
+        secure_zero_memory(key, sizeof(key));
+        secure_zero_memory(&hasher, sizeof(hasher));
+    });
+
+    // Fill as many random bytes as we can get
+    read_file(KVM_HW_RNG, key, 32);
+    read_file(KVM_MIX_RNG, key + 32, 32);
+
+    blake3_hasher_init(&hasher);
+    blake3_hasher_update(&hasher, key, 64);
+    blake3_hasher_finalize(&hasher, (uint8_t*)data, bytes);
 }
 
 

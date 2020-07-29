@@ -25,6 +25,7 @@ target_include_directories(kvm_crypto PUBLIC include)
 target_link_libraries(kvm_crypto
     PUBLIC
         kvm_core
+        blake3
 )
 install(TARGETS kvm_crypto DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)
