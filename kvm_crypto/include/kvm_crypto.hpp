@@ -2,6 +2,9 @@
 
 /*
     Cryptography for Raspberry Pi
+
+    AES in SRTP:
+    https://tools.ietf.org/html/rfc6188
 */
 
 #include "kvm_core.hpp"
