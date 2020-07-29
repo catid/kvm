@@ -112,8 +112,8 @@ find_package(Threads REQUIRED)
 # Targets
 
 add_subdirectory(kvm_core)
+add_subdirectory(kvm_crypto)
 add_subdirectory(kvm_capture)
 add_subdirectory(extern)
 add_subdirectory(kvm_turbojpeg)
-add_subdirectory(kvm_convert)
 add_subdirectory(kvm_encode)

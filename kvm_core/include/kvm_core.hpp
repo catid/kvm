@@ -155,4 +155,53 @@ uint8_t* AlignedAllocate(size_t size);
 void AlignedFree(void* p);
 
 
+//------------------------------------------------------------------------------
+// Conversion to Base64
+
+/// Get number of characters required to represent the given number of bytes.
+/// Input of 0 will return 0.
+int GetBase64LengthFromByteCount(int bytes);
+
+/// Returns number of bytes (ASCII characters) written, or 0 for error.
+/// Note that to disambiguate high zeros with padding bits, we use A to
+/// represent high zero bits and = to pad out the output to a multiple of
+/// 4 bytes.
+int WriteBase64(
+    const void* buffer,
+    int bytes,
+    char* encoded_buffer,
+    int encoded_bytes);
+
+/// This version writes a null-terminator.
+int WriteBase64Str(
+    const void* buffer,
+    int bytes,
+    char* encoded_buffer,
+    int encoded_bytes);
+
+std::string BinToBase64(const void* data, int bytes);
+
+
+//------------------------------------------------------------------------------
+// Conversion from Base64
+
+/// Get number of original bytes represented by the encoded buffer.
+/// This will be the number of data bytes written by ReadBase64().
+int GetByteCountFromBase64(
+    const char* encoded_buffer,
+    int bytes);
+
+/// Returns number of bytes written to decoded buffer.
+/// Returns 0 on error.
+/// Precondition: `decoded_buffer` contains enough bytes to represent the
+/// original data.
+/// At least GetByteCountFromBase64(encoded_buffer, encoded_bytes) bytes.
+int ReadBase64(
+    const char* encoded_buffer,
+    int encoded_bytes,
+    void* decoded_buffer);
+
+void Base64ToBin(const std::string& base64, std::vector<uint8_t>& data);
+
+
 } // namespace kvm
