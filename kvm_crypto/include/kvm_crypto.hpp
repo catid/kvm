@@ -1,7 +1,7 @@
 // Copyright 2020 Christopher A. Taylor
 
 /*
-    Cryptography
+    Cryptography for Raspberry Pi
 */
 
 #include "kvm_core.hpp"

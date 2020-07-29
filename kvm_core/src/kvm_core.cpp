@@ -2,6 +2,7 @@
 
 #include "kvm_core.hpp"
 #include "kvm_serializer.hpp"
+#include "kvm_logger.hpp"
 
 #if !defined(_WIN32)
     #include <pthread.h>
@@ -32,6 +33,8 @@
 #include <sstream>
 
 namespace kvm {
+
+static logger::Channel Logger("Core");
 
 
 //------------------------------------------------------------------------------
@@ -361,7 +364,7 @@ std::string BinToBase64(const void* data, int bytes)
 {
     const int bc = GetBase64LengthFromByteCount(bytes);
     std::vector<char> text(bc + 1);
-    WriteBase64Str(data, bytes, text.data(), bc);
+    WriteBase64Str(data, bytes, text.data(), bc + 1);
     return text.data();
 }
 
