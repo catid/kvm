@@ -64,7 +64,7 @@ static const char* mmalErrStr(int error)
 //------------------------------------------------------------------------------
 // MmalEncoder
 
-bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps, int fps, int gop)
+bool MmalEncoder::Initialize(int width, int height, int input_encoding)
 {
     ScopedFunction fail_scope([this]() {
         Shutdown();
@@ -103,7 +103,7 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     PortIn->format->es->video.crop.height = height;
     PortIn->format->flags = MMAL_ES_FORMAT_FLAG_FRAMED;
     PortIn->buffer_size = PortIn->buffer_size_recommended;
-    PortIn->buffer_num = PortIn->buffer_num_recommended;
+    PortIn->buffer_num = PortIn->buffer_num_recommended * 4;
 
     r = mmal_port_format_commit(PortIn);
     if (r != MMAL_SUCCESS) {
@@ -130,10 +130,10 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     PortOut->format->type = MMAL_ES_TYPE_VIDEO;
     PortOut->format->encoding = MMAL_ENCODING_H264;
     PortOut->format->encoding_variant = MMAL_ENCODING_VARIANT_H264_DEFAULT; // AnnexB
-    PortOut->format->bitrate = kbps * 1000;
-    PortOut->format->es->video.frame_rate.num = fps;
+    PortOut->format->bitrate = Settings.Kbps * 1000;
+    PortOut->format->es->video.frame_rate.num = Settings.Framerate;
     PortOut->format->es->video.frame_rate.den = 1;
-    PortOut->buffer_size = PortOut->buffer_size_recommended;
+    PortOut->buffer_size = PortOut->buffer_size_recommended * 4;
     PortOut->buffer_num = PortOut->buffer_num_recommended;
 
     r = mmal_port_format_commit(PortOut);
@@ -145,13 +145,13 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     MMAL_PARAMETER_VIDEO_PROFILE_T profile{};
     profile.hdr.id = MMAL_PARAMETER_PROFILE;
     profile.hdr.size = sizeof(profile);
+    // http://blog.mediacoderhq.com/h264-profiles-and-levels/
     // MMAL_VIDEO_PROFILE_H264_CONSTRAINED_BASELINE
     // MMAL_VIDEO_PROFILE_H264_BASELINE
     // MMAL_VIDEO_PROFILE_H264_MAIN
     // MMAL_VIDEO_PROFILE_H264_HIGH
-    profile.profile[0].profile = MMAL_VIDEO_PROFILE_H264_HIGH;
+    profile.profile[0].profile = MMAL_VIDEO_PROFILE_H264_CONSTRAINED_BASELINE;
     profile.profile[0].level = MMAL_VIDEO_LEVEL_H264_4; // Supports 1080p
-
     r = mmal_port_parameter_set(PortOut, &profile.hdr);
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_port_parameter_set PortOut MMAL_PARAMETER_PROFILE failed: ", mmalErrStr(r));
@@ -164,8 +164,7 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
         return false;
     }
 
-    // GOP size = 6
-    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_INTRAPERIOD, gop);
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_INTRAPERIOD, Settings.GopSize);
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_INTRAPERIOD failed: ", mmalErrStr(r));
         return false;
@@ -200,12 +199,15 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
         return false;
     }
 
-    // CABAC helps a lot if we can run it in real-time
-    r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_H264_DISABLE_CABAC, MMAL_FALSE);
+#if 0
+    // TBD: Fails to start when this is enabled
+    // Note that the encoder produces CAVLC output anyway so not sure why this setting exists
+    r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_H264_DISABLE_CABAC, MMAL_TRUE);
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_VIDEO_ENCODE_H264_DISABLE_CABAC failed: ", mmalErrStr(r));
         return false;
     }
+#endif
 
     // Every other P-frame can be dropped (nal_ref_idc = 0 for these frames)
     r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_DROPPABLE_PFRAMES, MMAL_FALSE);
@@ -236,18 +238,59 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
     }
 #endif
 
-#if 0 // Attic:
-
-    // Not sure what this is
-    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_EEDE_ENABLE, 0);
-    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_EEDE_LOSSRATE, 0);
-
     // Bitrate
-    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_BIT_RATE, kbps * 1000); // 4 Mbps
+    // TBD: Not sure if this is used or not
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_BIT_RATE, Settings.Kbps * 1000); // 4 Mbps
     if (r != MMAL_SUCCESS) {
         Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_BIT_RATE failed: ", mmalErrStr(r));
         return false;
     }
+
+    // Peak Bitrate
+    // TBD: Not sure if this is used or not
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_PEAK_RATE, Settings.Kbps * 1000); // 4 Mbps
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_ENCODE_PEAK_RATE failed: ", mmalErrStr(r));
+        return false;
+    }
+
+#if 0
+    // FIXME: Setting CBR seems to make it ignore the bitrate?
+    // MMAL_VIDEO_ENCODER_RC_MODEL_JVT
+    // MMAL_VIDEO_ENCODER_RC_MODEL_VOWIFI
+    // MMAL_VIDEO_ENCODER_RC_MODEL_CBR
+    MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL_T model{};
+    model.hdr.id = MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL;
+    model.hdr.size = sizeof(model);
+    model.rc_model = MMAL_VIDEO_ENCODER_RC_MODEL_CBR;
+    r = mmal_port_parameter_set(PortOut, &model.hdr);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set PortOut MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL failed: ", mmalErrStr(r));
+        return false;
+    }
+#endif
+
+#if 0 // Disabled because it does nothing
+    // MMAL_VIDEO_RATECONTROL_DEFAULT
+    // MMAL_VIDEO_RATECONTROL_VARIABLE - Default I think
+    // MMAL_VIDEO_RATECONTROL_VARIABLE_SKIP_FRAMES - Seems to do nothing different
+    // MMAL_VIDEO_RATECONTROL_CONSTANT - Unsupported, does not work
+    // MMAL_VIDEO_RATECONTROL_CONSTANT_SKIP_FRAMES - Unsupported, does not work
+    MMAL_PARAMETER_VIDEO_RATECONTROL_T rc{};
+    rc.hdr.id = MMAL_PARAMETER_RATECONTROL;
+    rc.hdr.size = sizeof(rc);
+    rc.control = MMAL_VIDEO_RATECONTROL_CONSTANT_SKIP_FRAMES;
+    r = mmal_port_parameter_set(PortOut, &rc.hdr);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set PortOut MMAL_PARAMETER_RATECONTROL failed: ", mmalErrStr(r));
+        return false;
+    }
+#endif
+
+#if 0 // Attic:
+    // Not sure what this is
+    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_EEDE_ENABLE, 0);
+    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_EEDE_LOSSRATE, 0);
 
     MMAL_PARAMETER_FRAME_RATE_T rate{};
     rate.hdr.id = MMAL_PARAMETER_VIDEO_FRAME_RATE;
@@ -260,28 +303,12 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
         return false;
     }
 
-    // MMAL_VIDEO_ENCODER_RC_MODEL_JVT
-    // MMAL_VIDEO_ENCODER_RC_MODEL_VOWIFI
-    // MMAL_VIDEO_ENCODER_RC_MODEL_CBR
-    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL, MMAL_VIDEO_ENCODER_RC_MODEL_CBR);
-    if (r != MMAL_SUCCESS) {
-        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_ENCODE_RC_MODEL failed: ", mmalErrStr(r));
-        return false;
-    }
-
-    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_RATECONTROL, MMAL_VIDEO_RATECONTROL_CONSTANT);
-    if (r != MMAL_SUCCESS) {
-        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_RATECONTROL failed: ", mmalErrStr(r));
-        return false;
-    }
-
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_MIN_QUANT, 1);
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_MAX_QUANT, 1);
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_INITIAL_QUANT, 1);
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_QP_P, 1);
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_RC_SLICE_DQUANT, 1);
     //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_FRAME_LIMIT_BITS, 1);
-    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_PEAK_RATE, 1);
 
     // Causes it to hang
     r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_H264_LOW_LATENCY, MMAL_TRUE);
@@ -304,7 +331,7 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
 
     // MMAL_PARAMETER_VIDEO_ENCODE_HEADERS_WITH_FRAME reports: Not implemented
 
-#endif
+#endif // Attic
 
     // No AUDs
     r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_H264_AU_DELIMITERS, MMAL_FALSE);
@@ -333,7 +360,7 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding, int kbps
 
 void MmalEncoder::Shutdown()
 {
-    if (!Encoder) {
+    if (Encoder) {
         mmal_wrapper_destroy(Encoder);
         Encoder = nullptr;
     }
@@ -342,9 +369,6 @@ void MmalEncoder::Shutdown()
 uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_keyframe, int& bytes)
 {
     if (!Encoder) {
-        const int kbps = 4000;
-        const int fps = 30;
-        const int gop = 30;
         int input_encoding = 0;
         if (frame->Format == PixelFormat::YUV422P) {
             input_encoding = MMAL_ENCODING_I422;
@@ -360,7 +384,7 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_key
             Logger.Error("Unsupported format");
             return nullptr;
         }
-        if (!Initialize(frame->Width, frame->Height, input_encoding, kbps, fps, gop)) {
+        if (!Initialize(frame->Width, frame->Height, input_encoding)) {
             Logger.Error("Initialize failed");
             return nullptr;
         }

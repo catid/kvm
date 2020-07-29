@@ -32,6 +32,12 @@ int main(int argc, char* argv[])
     TurboJpegDecoder decoder;
     MmalEncoder encoder;
 
+    MmalEncoderSettings settings;
+    settings.Kbps = 4000;
+    settings.Framerate = 30;
+    settings.GopSize = 30;
+    encoder.SetSettings(settings);
+
     std::ofstream file("output.h264");
     if (!file) {
         Logger.Error("Failed to open output file: output.h264");
@@ -58,14 +64,14 @@ int main(int argc, char* argv[])
 
         t0 = GetTimeUsec();
 
-        bool keyframe = buffer->FrameNumber % 2 == 0;
+        bool keyframe = false; //buffer->FrameNumber % 2 == 0;
 
         int bytes = 0;
         uint8_t* data = encoder.Encode(frame, keyframe, bytes);
 
         t1 = GetTimeUsec();
         dt = t1 - t0;
-        Logger.Info("Encoding H264 took ", dt / 1000.f, " msec");
+        Logger.Info("Encoding H264 took ", dt / 1000.f, " msec: ", bytes, " bytes");
 
         if (!data) {
             Logger.Error("Encode failed");

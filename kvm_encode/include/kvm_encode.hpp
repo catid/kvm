@@ -29,6 +29,13 @@ namespace kvm {
 //------------------------------------------------------------------------------
 // MmalEncoder
 
+struct MmalEncoderSettings
+{
+    int Kbps = 4000; // 4 Mbps
+    int Framerate = 30; // From frame source settings
+    int GopSize = 30; // Interval between keyframes
+};
+
 class MmalEncoder
 {
 public:
@@ -37,12 +44,19 @@ public:
         Shutdown();
     }
 
-    bool Initialize(int width, int height, int input_encoding, int kbps, int fps, int gop);
+    void SetSettings(const MmalEncoderSettings& settings)
+    {
+        Settings = settings;
+    }
+
+    bool Initialize(int width, int height, int input_encoding);
     void Shutdown();
 
     uint8_t* Encode(const std::shared_ptr<Frame>& frame, bool force_keyframe, int& bytes);
 
 protected:
+    MmalEncoderSettings Settings;
+
     MMAL_WRAPPER_T* Encoder = nullptr;
     int Width = 0, Height = 0;
 
