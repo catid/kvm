@@ -5,7 +5,7 @@ project(blake3 LANGUAGES C)
 ################################################################################
 # Enable NEON
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wall -Wextra -std=c11 -mfpu=neon -ftree-vectorize")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wall -Wextra -std=c11 -mcpu=native -mfpu=neon-vfpv3 -ftree-vectorize")
 
 
 ################################################################################

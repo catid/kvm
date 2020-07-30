@@ -1,23 +1,24 @@
 cmake_minimum_required(VERSION 3.5)
-project(aes LANGUAGES CXX)
+project(aes LANGUAGES CXX ASM)
 
 
 ################################################################################
 # Enable NEON
 
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wall -Wextra -std=c11 -mfpu=neon -ftree-vectorize")
+SET(ASM_OPTIONS "-mcpu=native -mfpu=neon-vfpv3 -ftree-vectorize")
+SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 
 
 ################################################################################
 # Source
 
 set(INCLUDE_FILES
-    include/aes.h
+    include/aes256.h
 )
 
 set(SOURCE_FILES
     ${INCLUDE_FILES}
-    src/aes.S
+    src/aes256.S
 )
 
 
