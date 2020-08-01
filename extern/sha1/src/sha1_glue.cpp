@@ -20,7 +20,9 @@
 
 #include "sha1.h"
 
-extern void sha1_transform_neon(void *state_h, const char *data,
+#include <string.h>
+
+extern "C" void sha1_transform_neon(void *state_h, const uint8_t *data,
                     unsigned int rounds);
 
 void sha1_neon_init(struct sha1_state *sctx)
@@ -70,35 +72,58 @@ int sha1_neon_update(struct sha1_state *sctx, const uint8_t *data, unsigned int 
         return 0;
     }
 
-    return __sha1_neon_update(desc, data, len, partial);
+    return __sha1_neon_update(sctx, data, len, partial);
 }
+
+// Swaps byte order in a 16-bit word
+inline uint16_t ByteSwap16(uint16_t word)
+{
+    return (word >> 8) | (word << 8);
+}
+
+// Swaps byte order in a 32-bit word
+inline uint32_t ByteSwap32(uint32_t word)
+{
+    const uint16_t swapped_old_hi = ByteSwap16(static_cast<uint16_t>(word >> 16));
+    const uint16_t swapped_old_lo = ByteSwap16(static_cast<uint16_t>(word));
+    return (static_cast<uint32_t>(swapped_old_lo) << 16) | swapped_old_hi;
+}
+
+// Swaps byte order in a 64-bit word
+inline uint64_t ByteSwap64(uint64_t word)
+{
+    const uint32_t swapped_old_hi = ByteSwap32(static_cast<uint32_t>(word >> 32));
+    const uint32_t swapped_old_lo = ByteSwap32(static_cast<uint32_t>(word));
+    return (static_cast<uint64_t>(swapped_old_lo) << 32) | swapped_old_hi;
+}
+
 
 /* Add padding and return the message digest. */
 int sha1_neon_final(struct sha1_state *sctx, uint8_t *out)
 {
     unsigned int i, index, padlen;
-    __be32 *dst = (__be32 *)out;
-    __be64 bits;
+    uint32_t *dst = (uint32_t *)out;
+    uint64_t bits;
     static const uint8_t padding[SHA1_BLOCK_SIZE] = { 0x80, };
 
-    bits = cpu_to_be64(sctx->count << 3);
+    bits = ByteSwap64(sctx->count << 3);
 
     /* Pad out to 56 mod 64 and append length */
     index = sctx->count % SHA1_BLOCK_SIZE;
-    padlen = (index < 56) ? (56 - index) : ((SHA1_BLOCK_SIZE+56) - index);
+    padlen = (index < 56) ? (56 - index) : ((SHA1_BLOCK_SIZE + 56) - index);
 
     /* We need to fill a whole block for __sha1_neon_update() */
     if (padlen <= 56) {
         sctx->count += padlen;
         memcpy(sctx->buffer + index, padding, padlen);
     } else {
-        __sha1_neon_update(desc, padding, padlen, index);
+        __sha1_neon_update(sctx, padding, padlen, index);
     }
-    __sha1_neon_update(desc, (const uint8_t *)&bits, sizeof(bits), 56);
+    __sha1_neon_update(sctx, (const uint8_t *)&bits, (unsigned)sizeof(bits), 56);
 
     /* Store state in digest */
     for (i = 0; i < 5; i++) {
-        dst[i] = cpu_to_be32(sctx->state[i]);
+        dst[i] = ByteSwap32(sctx->state[i]);
     }
 
     /* Wipe context */

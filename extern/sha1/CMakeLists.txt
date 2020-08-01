@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(sha1 LANGUAGES C CXX ASM)
+project(sha1 LANGUAGES CXX ASM)
 
 
 ################################################################################
@@ -19,7 +19,7 @@ set(INCLUDE_FILES
 set(SOURCE_FILES
     ${INCLUDE_FILES}
     src/sha1.S
-    src/sha1_glue.c
+    src/sha1_glue.cpp
 )
 
 

@@ -286,7 +286,9 @@
  *                      unsigned int nblks)
  */
 .align 3
-ENTRY(sha1_transform_neon)
+.global sha1_transform_neon
+.type   sha1_transform_neon,%function
+sha1_transform_neon:
   /* input:
    *	r0: ctx, CTX
    *	r1: data (64*nblks bytes)
@@ -628,4 +630,3 @@ ENTRY(sha1_transform_neon)
 
 .Ldo_nothing:
   bx lr
-ENDPROC(sha1_transform_neon)

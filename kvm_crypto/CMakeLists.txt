@@ -27,6 +27,7 @@ target_link_libraries(kvm_crypto
         kvm_core
         blake3
         aes
+        sha1
 )
 install(TARGETS kvm_crypto DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)
