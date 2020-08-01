@@ -22,8 +22,8 @@
 
 #include <string.h>
 
-extern "C" void sha1_transform_neon(void *state_h, const uint8_t *data,
-                    unsigned int rounds);
+extern "C" void sha1_transform_neon(void *state_h, const uint8_t *data, unsigned int rounds);
+
 
 void sha1_neon_init(struct sha1_state *sctx)
 {

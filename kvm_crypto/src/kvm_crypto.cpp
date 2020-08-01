@@ -90,4 +90,23 @@ void FillRandom(void* data, int bytes)
 }
 
 
+//------------------------------------------------------------------------------
+// Hash
+
+Sha1Hash::Sha1Hash()
+{
+    sha1_neon_init(&State);
+}
+
+void Sha1Hash::Update(const uint8_t* data, int bytes)
+{
+    sha1_neon_update(&State, data, (unsigned)bytes);
+}
+
+void Sha1Hash::Final(uint8_t hash[SHA1_DIGEST_SIZE])
+{
+    sha1_neon_final(&State, hash);
+}
+
+
 } // namespace kvm

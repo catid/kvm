@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+extern "C" {
+
 
 //------------------------------------------------------------------------------
 // Constants
@@ -36,3 +38,6 @@ void sha1_neon_init(struct sha1_state *sctx);
 int sha1_neon_update(struct sha1_state *sctx, const uint8_t *data, unsigned int len);
 
 int sha1_neon_final(struct sha1_state *sctx, uint8_t *out);
+
+
+} // extern "C"

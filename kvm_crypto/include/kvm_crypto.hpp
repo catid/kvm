@@ -37,7 +37,18 @@ void FillRandom(void* data, int bytes);
 //------------------------------------------------------------------------------
 // Hash
 
-void HmacSha1();
+class Sha1Hash
+{
+public:
+    Sha1Hash();
+
+    void Update(const uint8_t* data, int bytes);
+
+    void Final(uint8_t hash[SHA1_DIGEST_SIZE]);
+
+protected:
+    sha1_state State;
+};
 
 
 } // namespace kvm
