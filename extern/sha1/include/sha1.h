@@ -10,20 +10,27 @@
 
 extern "C" {
 
-#define SHA1_DIGEST_SIZE        20
-#define SHA1_BLOCK_SIZE         64
 
-#define SHA1_H0		0x67452301UL
-#define SHA1_H1		0xefcdab89UL
-#define SHA1_H2		0x98badcfeUL
-#define SHA1_H3		0x10325476UL
-#define SHA1_H4		0xc3d2e1f0UL
+//------------------------------------------------------------------------------
+// Constants
 
+#define SHA1_DIGEST_SIZE 20
+#define SHA1_BLOCK_SIZE 64
+
+#define SHA1_H0 0x67452301UL
+#define SHA1_H1 0xefcdab89UL
+#define SHA1_H2 0x98badcfeUL
+#define SHA1_H3 0x10325476UL
+#define SHA1_H4 0xc3d2e1f0UL
+
+
+//------------------------------------------------------------------------------
+// Constants
 
 struct sha1_state {
-	uint64_t count;
-	uint32_t state[SHA1_DIGEST_SIZE / 4];
-	uint8_t buffer[SHA1_BLOCK_SIZE];
+    uint64_t count;
+    uint32_t state[SHA1_DIGEST_SIZE / 4];
+    uint8_t buffer[SHA1_BLOCK_SIZE];
 };
 
 void sha1_neon_init(struct sha1_state *sctx);
