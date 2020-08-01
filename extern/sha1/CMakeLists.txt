@@ -5,8 +5,8 @@ project(sha1 LANGUAGES CXX ASM)
 ################################################################################
 # Enable NEON
 
-SET(ASM_OPTIONS "-mcpu=native -mfpu=neon-vfpv3")
-SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
+SET(ASM_OPTIONS "-mcpu=native -mfpu=neon-vfpv3 -ftree-vectorize")
+SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}")
 
 
 ################################################################################

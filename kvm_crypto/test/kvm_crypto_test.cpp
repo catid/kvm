@@ -45,22 +45,18 @@ void TestAES()
 
 void TestSHA1()
 {
-    Logger.Info("test = ", 10.1f, " TEST");
-
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 10; ++i) {
         uint64_t t0 = GetTimeUsec();
 
-        kvm::Sha1Hash* hash = new kvm::Sha1Hash();
+        kvm::Sha1Hash hash;
 
         uint8_t data[1200] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        hash->Update(data, 1200);
+        hash.Update(data, 1200);
 
         std::vector<uint8_t> digest(SHA1_DIGEST_SIZE);
-        hash->Final(digest.data());
+        hash.Final(digest.data());
 
         uint64_t t1 = GetTimeUsec();
-        Logger.Info("dt = ", t1 - t0, " TEST");
-        Logger.Info("test = ", 10.1f, " TEST");
         Logger.Info("sha1 in ", (t1 - t0) / 1000.f, " msec for 1200 bytes");
     }
 }
@@ -76,8 +72,6 @@ int main(int argc, char* argv[])
 
     uint8_t key[32];
 
-    TestSHA1();
-
     for (int i = 0; i < 10; ++i) {
         uint64_t t0 = GetTimeUsec();
         FillRandom(key, 32);
@@ -86,6 +80,7 @@ int main(int argc, char* argv[])
     }
 
     TestAES();
+    TestSHA1();
 
     return kAppSuccess;
 }

@@ -299,7 +299,7 @@ sha1_transform_neon:
   beq .Ldo_nothing;
 
   push {r4-r12, lr};
-  /*vpush {q4-q7};*/
+  vpush {q4-q7};
 
   adr RT3, .LK_VEC;
 
@@ -622,7 +622,7 @@ sha1_transform_neon:
   add _b, RT1;
   add _c, RT2;
   add _d, RT3;
-  /*vpop {q4-q7};*/
+  vpop {q4-q7};
   add _e, RT0;
   stm RSTATE, {_a-_e};
 
