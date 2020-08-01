@@ -11,10 +11,13 @@
 extern "C" {
 
 
+#define AES_256_nonce_bytes 12 /* 96-bit */
+#define AES_256_key_bytes 32 /* 256-bit */
+
 typedef struct AES_256_param_t {
     uint32_t ctr;
-    uint8_t nonce[12];
-    uint8_t key[32];
+    uint8_t nonce[AES_256_nonce_bytes];
+    uint8_t key[AES_256_key_bytes];
     uint8_t rk[13*16];
 } AES_256_param;
 

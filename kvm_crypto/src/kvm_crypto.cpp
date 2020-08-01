@@ -17,6 +17,16 @@ static logger::Channel Logger("Crypto");
 //------------------------------------------------------------------------------
 // Tools
 
+// Prevent compiler from optimizing out memset()
+static void secure_zero_memory(void* v, size_t n)
+{
+    volatile uint8_t* p = (volatile uint8_t*)v;
+
+    for (size_t i = 0; i < n; ++i) {
+        p[i] = 0;
+    }
+}
+
 static int read_file(const char* path, uint8_t* buffer, int bytes)
 {
     int completed = 0, retries = 100;
@@ -59,16 +69,6 @@ static int read_file(const char* path, uint8_t* buffer, int bytes)
 //------------------------------------------------------------------------------
 // Random
 
-// Prevent compiler from optimizing out memset()
-static void secure_zero_memory(void* v, size_t n)
-{
-    volatile uint8_t* p = (volatile uint8_t*)v;
-
-    for (size_t i = 0; i < n; ++i) {
-        p[i] = 0;
-    }
-}
-
 void FillRandom(void* data, int bytes)
 {
     blake3_hasher hasher;
@@ -91,11 +91,39 @@ void FillRandom(void* data, int bytes)
 
 
 //------------------------------------------------------------------------------
+// Encrypt
+
+AesCtrEncrypt::~AesCtrEncrypt()
+{
+    secure_zero_memory(&State, sizeof(State));
+}
+
+void AesCtrEncrypt::SetKey(const uint8_t key[AES_256_key_bytes], const uint8_t nonce[AES_256_nonce_bytes])
+{
+    State.ctr = 0;
+    memcpy(State.nonce, nonce, AES_256_nonce_bytes);
+    memcpy(State.key, key, AES_256_key_bytes);
+
+    AES_256_keyschedule(key, State.rk);
+}
+
+void AesCtrEncrypt::Encrypt(const uint8_t* data, uint8_t* output, int bytes)
+{
+    AES_256_encrypt_ctr(&State, data, output, bytes);
+}
+
+
+//------------------------------------------------------------------------------
 // Hash
 
 Sha1Hash::Sha1Hash()
 {
     sha1_neon_init(&State);
+}
+
+Sha1Hash::~Sha1Hash()
+{
+    secure_zero_memory(&State, sizeof(State));
 }
 
 void Sha1Hash::Update(const uint8_t* data, int bytes)

@@ -35,15 +35,34 @@ void FillRandom(void* data, int bytes);
 
 
 //------------------------------------------------------------------------------
+// Encrypt
+
+class AesCtrEncrypt
+{
+public:
+    ~AesCtrEncrypt();
+    void SetKey(const uint8_t key[AES_256_key_bytes], const uint8_t nonce[AES_256_nonce_bytes]);
+
+    static int DataBytesToBlockBytes(int bytes)
+    {
+        return (bytes + 15) & ~15;
+    }
+    void Encrypt(const uint8_t* data, uint8_t* output, int bytes);
+
+protected:
+    AES_256_param State;
+};
+
+
+//------------------------------------------------------------------------------
 // Hash
 
 class Sha1Hash
 {
 public:
     Sha1Hash();
-
+    ~Sha1Hash();
     void Update(const uint8_t* data, int bytes);
-
     void Final(uint8_t hash[SHA1_DIGEST_SIZE]);
 
 protected:
