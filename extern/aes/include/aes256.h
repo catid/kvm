@@ -15,8 +15,8 @@ extern "C" {
 #define AES_256_key_bytes 32 /* 256-bit */
 
 typedef struct AES_256_param_t {
-    uint32_t ctr;
-    uint8_t nonce[AES_256_nonce_bytes];
+    // Low 2-4 bytes are used for nonce, remaining bytes are for IV
+    uint8_t nonce_iv[AES_256_nonce_bytes];
     uint8_t key[AES_256_key_bytes];
     uint8_t rk[13*16];
 } AES_256_param;

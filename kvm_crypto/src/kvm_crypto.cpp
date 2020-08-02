@@ -100,8 +100,7 @@ AesCtrEncrypt::~AesCtrEncrypt()
 
 void AesCtrEncrypt::SetKey(const uint8_t key[AES_256_key_bytes], const uint8_t nonce[AES_256_nonce_bytes])
 {
-    State.ctr = 0;
-    memcpy(State.nonce, nonce, AES_256_nonce_bytes);
+    memcpy(State.nonce_iv, nonce, AES_256_nonce_bytes);
     memcpy(State.key, key, AES_256_key_bytes);
 
     AES_256_keyschedule(key, State.rk);
