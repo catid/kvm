@@ -47,7 +47,7 @@ public:
     {
         return (bytes + 15) & ~15;
     }
-    void Encrypt(const uint8_t* data, uint8_t* output, int bytes);
+    void Encrypt(const void* data, uint8_t* output, int bytes);
 
 protected:
     AES_256_param State;
@@ -62,12 +62,21 @@ class Sha1Hash
 public:
     Sha1Hash();
     ~Sha1Hash();
-    void Update(const uint8_t* data, int bytes);
+    void Update(const void* data, int bytes);
     void Final(uint8_t hash[SHA1_DIGEST_SIZE]);
 
 protected:
     sha1_state State;
 };
+
+
+//------------------------------------------------------------------------------
+// HMAC-SHA1
+
+void hmac_sha1(
+    const void* text, int text_len,
+    const void* key, int key_len,
+    uint8_t digest[SHA1_DIGEST_SIZE]);
 
 
 } // namespace kvm

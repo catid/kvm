@@ -107,9 +107,9 @@ void AesCtrEncrypt::SetKey(const uint8_t key[AES_256_key_bytes], const uint8_t n
     AES_256_keyschedule(key, State.rk);
 }
 
-void AesCtrEncrypt::Encrypt(const uint8_t* data, uint8_t* output, int bytes)
+void AesCtrEncrypt::Encrypt(const void* data, uint8_t* output, int bytes)
 {
-    AES_256_encrypt_ctr(&State, data, output, bytes);
+    AES_256_encrypt_ctr(&State, (const uint8_t*)data, output, bytes);
 }
 
 
@@ -126,14 +126,76 @@ Sha1Hash::~Sha1Hash()
     secure_zero_memory(&State, sizeof(State));
 }
 
-void Sha1Hash::Update(const uint8_t* data, int bytes)
+void Sha1Hash::Update(const void* data, int bytes)
 {
-    sha1_neon_update(&State, data, (unsigned)bytes);
+    sha1_neon_update(&State, (const uint8_t*)data, (unsigned)bytes);
 }
 
 void Sha1Hash::Final(uint8_t hash[SHA1_DIGEST_SIZE])
 {
     sha1_neon_final(&State, hash);
+}
+
+
+//------------------------------------------------------------------------------
+// HMAC-SHA1
+
+void hmac_sha1(
+    const void* text, int text_len,
+    const void* key, int key_len,
+    uint8_t digest[SHA1_DIGEST_SIZE])
+{
+    // Inner padding: key XOR ipad
+    uint8_t k_ipad[65] = { 0 };
+
+    // Outer padding: key XOR opad
+    uint8_t k_opad[65] = { 0 };
+
+    uint8_t tk[SHA1_DIGEST_SIZE];
+    int i;
+
+    // if key is longer than 64 bytes reset it to key=MD5(key)
+    if (key_len > 64) {
+        Sha1Hash tctx;
+        tctx.Update(key, key_len);
+        tctx.Final(tk);
+
+        key = tk;
+        key_len = SHA1_DIGEST_SIZE;
+    }
+
+    /*
+     * the HMAC_MD5 transform looks like:
+     *
+     * MD5(K XOR opad, MD5(K XOR ipad, text))
+     *
+     * where K is an n byte key
+     * ipad is the byte 0x36 repeated 64 times
+     * opad is the byte 0x5c repeated 64 times
+     * and text is the data being protected
+     */
+
+    // start out by storing key in pads
+    memcpy(k_ipad, key, key_len);
+    memcpy(k_opad, key, key_len);
+
+    // XOR key with ipad and opad values
+    for (i=0; i<64; i++) {
+        k_ipad[i] ^= 0x36;
+        k_opad[i] ^= 0x5c;
+    }
+
+    // Inner hash
+    Sha1Hash inner;
+    inner.Update(k_ipad, 64);
+    inner.Update(text, text_len);
+    inner.Final(digest);
+
+    // Outer hash
+    Sha1Hash outer;
+    outer.Update(k_opad, 64);
+    outer.Update(digest, SHA1_DIGEST_SIZE);
+    outer.Final(digest);
 }
 
 

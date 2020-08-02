@@ -11,7 +11,7 @@
 extern "C" {
 
 
-#define AES_256_nonce_bytes 12 /* 96-bit */
+#define AES_256_nonce_bytes 16 /* 128-bit */
 #define AES_256_key_bytes 32 /* 256-bit */
 
 typedef struct AES_256_param_t {
