@@ -93,6 +93,7 @@ void FillRandom(void* data, int bytes)
 //------------------------------------------------------------------------------
 // Encrypt
 
+#if 0
 AesCtrEncrypt::~AesCtrEncrypt()
 {
     secure_zero_memory(&State, sizeof(State));
@@ -110,6 +111,7 @@ void AesCtrEncrypt::Encrypt(const void* data, uint8_t* output, int bytes)
 {
     AES_256_encrypt_ctr(&State, (const uint8_t*)data, output, bytes);
 }
+#endif
 
 
 //------------------------------------------------------------------------------

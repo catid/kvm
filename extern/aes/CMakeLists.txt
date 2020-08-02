@@ -13,12 +13,12 @@ SET(CMAKE_ASM_FLAGS "${CFLAGS} ${ASM_OPTIONS}" )
 # Source
 
 set(INCLUDE_FILES
-    include/aes256.h
+    include/aes128.h
 )
 
 set(SOURCE_FILES
     ${INCLUDE_FILES}
-    src/aes256.S
+    src/aes128.S
 )
 
 

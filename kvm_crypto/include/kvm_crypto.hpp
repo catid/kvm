@@ -14,7 +14,7 @@
 */
 
 #include "kvm_core.hpp"
-#include "aes256.h"
+#include "aes128.h"
 #include "sha1.h"
 
 namespace kvm {
@@ -37,11 +37,12 @@ void FillRandom(void* data, int bytes);
 //------------------------------------------------------------------------------
 // Encrypt
 
-class AesCtrEncrypt
+#if 0
+class Aes128CtrEncrypt
 {
 public:
-    ~AesCtrEncrypt();
-    void SetKey(const uint8_t key[AES_256_key_bytes], const uint8_t nonce[AES_256_nonce_bytes]);
+    ~Aes128CtrEncrypt();
+    void SetKey(const uint8_t key[AES_128_key_bytes], const uint8_t nonce[AES_128_nonce_bytes]);
 
     static int DataBytesToBlockBytes(int bytes)
     {
@@ -50,8 +51,9 @@ public:
     void Encrypt(const void* data, uint8_t* output, int bytes);
 
 protected:
-    AES_256_param State;
+    AES_128_ctx State;
 };
+#endif
 
 
 //------------------------------------------------------------------------------

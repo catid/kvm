@@ -4,41 +4,7 @@
 #include "kvm_logger.hpp"
 using namespace kvm;
 
-#include "aes256.h"
-
 static logger::Channel Logger("CryptoTest");
-
-void TestAES()
-{
-    const uint32_t LEN = 256*16;
-    const uint32_t LEN_ROUNDED = ((LEN+15)/16)*16;
-
-    const uint8_t nonce[AES_256_nonce_bytes] = {1,2,3,1,2,4,1,2,5,1,2,6};
-    const uint8_t key[AES_256_key_bytes] = {4,5,6,7,4,5,6,8,4,5,6,9,4,5,6,10,4,5,6,11,4,5,6,12,4,5,6,13,4,5,6,14};
-    uint8_t in[LEN];
-    uint8_t out[LEN_ROUNDED];
-
-    unsigned int i;
-    for(i=0;i<LEN;++i) {
-        in[i] = i%256;
-    }
-
-    for (int i = 0; i < 10; ++i) {
-        uint64_t t0 = GetTimeUsec();
-        AesCtrEncrypt aes;
-        aes.SetKey(key, nonce);
-        uint64_t t1 = GetTimeUsec();
-        Logger.Info("AES_256_keyschedule in ", (t1 - t0) / 1000.f, " msec");
-    }
-
-    for (int i = 0; i < 10; ++i) {
-        uint64_t t0 = GetTimeUsec();
-        AesCtrEncrypt aes;
-        aes.Encrypt(in, out, LEN);
-        uint64_t t1 = GetTimeUsec();
-        Logger.Info("AES_256_encrypt_ctr in ", (t1 - t0) / 1000.f / (LEN_ROUNDED / 16), " msec per block");
-    }
-}
 
 void TestSHA1()
 {
@@ -150,7 +116,6 @@ int main(int argc, char* argv[])
         Logger.Info("Generated key: ", BinToBase64(key, 32), " in ", (t1 - t0) / 1000.f, " msec");
     }
 
-    TestAES();
     TestSHA1();
     if (!TestSHA1Hmac()) {
         Logger.Error("ERROR: HMAC-SHA1 test failed");
