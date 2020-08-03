@@ -70,7 +70,7 @@ static bool run_aes(const uint8_t* key, const uint8_t* ctr, const uint8_t* pt, c
     AES_128_ctx p;
     memcpy(p.nonce_iv, ctr, AES_128_nonce_bytes);
     memcpy(p.key, key, AES_128_key_bytes);
-    AES_128_keyschedule(p.key, p.rk);
+    AES_128_keyschedule(key, p.rk);
 
     std::vector<uint8_t> output(bytes + 16);
     AES_128_encrypt_ctr(&p, pt, output.data(), bytes);
@@ -82,6 +82,7 @@ static bool run_aes(const uint8_t* key, const uint8_t* ctr, const uint8_t* pt, c
     }
     return true;
 }
+
 
 bool TestAES()
 {
