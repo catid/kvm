@@ -1,7 +1,7 @@
 // Copyright 2020 Christopher A. Taylor
 
 /*
-    Core tools used by multiple KVM sub-projects
+    V4L2-based video capture
 */
 
 #include "kvm_core.hpp"

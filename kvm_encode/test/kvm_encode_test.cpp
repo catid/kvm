@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     CORE_UNUSED(argc);
     CORE_UNUSED(argv);
 
-    Logger.Info("kvm_turbojpeg_test");
+    Logger.Info("kvm_encode_test");
 
     V4L2Capture capture;
     TurboJpegDecoder decoder;
