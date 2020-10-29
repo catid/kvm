@@ -7,3 +7,10 @@ The ethernet adapter mode is used to configure the WiFi SSID and passphrase.
 
 Once it is on the WiFi, the adapter becomes an IoT device reachable via web browser.
 The browser displays the video from the target device, and keystrokes/mouse movements are relayed to the target.
+
+
+## Building
+
+```
+    sudo apt install janus janus-dev cmake g++ libglib2.0-dev
+```

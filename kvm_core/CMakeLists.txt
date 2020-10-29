@@ -8,8 +8,6 @@ project(kvm_core LANGUAGES CXX)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-FIND_PACKAGE(Boost 1.67 COMPONENTS program_options REQUIRED)
-
 
 ################################################################################
 # Source
@@ -39,12 +37,10 @@ add_library(kvm_core ${SOURCE_FILES})
 target_include_directories(kvm_core
     PUBLIC
         include
-        ${Boost_INCLUDE_DIR}
 )
 target_link_libraries(kvm_core
     PUBLIC
         Threads::Threads
-        ${Boost_LIBRARIES}
 )
 install(TARGETS kvm_core DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)
