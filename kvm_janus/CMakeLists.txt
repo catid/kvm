@@ -21,6 +21,8 @@ PKG_CHECK_MODULES(GLIB glib-2.0)
 
 set(SOURCE_FILES
     plugin/janus_plugin.cpp
+    include/janus_payloader.hpp
+    src/janus_payloader.cpp
 )
 
 
@@ -33,10 +35,12 @@ target_include_directories(kvm_janus
         ${JANUS_PATH}
         ${JANUS_SUB_PATH}
         ${GLIB_INCLUDE_DIRS}
+        include
 )
 target_link_libraries(kvm_janus
     PUBLIC
         ${Glib_LIBRARY}
+        kvm_encode
 )
 
 install(TARGETS kvm_janus DESTINATION lib)

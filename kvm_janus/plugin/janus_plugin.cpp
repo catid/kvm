@@ -7,6 +7,29 @@
 
 #include <janus/plugins/plugin.h>
 
+#include <mutex>
+#include <vector>
+#include "kvm_pipeline.hpp"
+#include "kvm_logger.hpp"
+using namespace kvm;
+
+static logger::Channel Logger("plugin");
+
+#include <jansson.h>
+
+#include "janus_payloader.hpp"
+
+static VideoPipeline m_Pipeline;
+
+struct ClientData
+{
+    janus_plugin_session *handle = nullptr;
+    bool transmit = false;
+};
+
+static std::mutex m_Lock;
+static std::vector<ClientData> m_Clients;
+
 static janus_callbacks *m_Callbacks = nullptr;
 
 /*! \brief Plugin initialization/constructor
@@ -16,13 +39,35 @@ static janus_callbacks *m_Callbacks = nullptr;
 int plugin_init(janus_callbacks *callback, const char *config_path)
 {
     m_Callbacks = callback;
+
+    m_Pipeline.Initialize([&](
+        uint64_t frame_number,
+        uint64_t shutter_usec,
+        const uint8_t* data,
+        int bytes,
+        bool keyframe
+    ) {
+        std::lock_guard<std::mutex> locker(m_Lock);
+
+        janus::WrapH264Rtp(frame_number, shutter_usec, data, bytes, keyframe,
+            [](const uint8_t* rtp_data, int rtp_bytes)
+        {
+            for (auto& client : m_Clients)
+            {
+                if (client.transmit) {
+                    m_Callbacks->relay_rtp(client.handle, 1, (char*)rtp_data, rtp_bytes);
+                }
+            }
+        });
+    });
+
     return 0;
 }
 
 /*! \brief Plugin deinitialization/destructor */
 void plugin_destroy(void)
 {
-
+    m_Pipeline.Shutdown();
 }
 
 /*! \brief Informative method to request the API version this plugin was compiled against
@@ -51,7 +96,7 @@ const char *plugin_get_version_string(void)
 /*! \brief Informative method to request a description of the plugin */
 const char *plugin_get_description(void)
 {
-    return "KVMHDMI ingest to video";
+    return "HDMI Video Pipeline";
 }
 
 /*! \brief Informative method to request the name of the plugin */
@@ -77,7 +122,12 @@ const char *plugin_get_package(void)
     * @param[out] error An integer that may contain information about any error */
 void plugin_create_session(janus_plugin_session *handle, int *error)
 {
+    std::lock_guard<std::mutex> locker(m_Lock);
 
+    ClientData data;
+    data.handle = handle;
+
+    m_Clients.push_back(data);
 }
 
 /*! \brief Method to handle an incoming message/request from a peer
@@ -89,14 +139,23 @@ void plugin_create_session(janus_plugin_session *handle, int *error)
     * (for asynchronously managed requests) or an error */
 struct janus_plugin_result *plugin_handle_message(janus_plugin_session *handle, char *transaction, json_t *message, json_t *jsep)
 {
-
+    // FIXME
 }
 
 /*! \brief Callback to be notified when the associated PeerConnection is up and ready to be used
     * @param[in] handle The plugin/gateway session used for this peer */
 void plugin_setup_media(janus_plugin_session *handle)
 {
+    std::lock_guard<std::mutex> locker(m_Lock);
 
+    for (size_t i = 0; i < m_Clients.size(); ++i) {
+        if (m_Clients[i].handle == handle) {
+            Logger.Info("plugin_setup_media: Session unmuted");
+            m_Clients[i].transmit = true;
+            return;
+        }
+    }
+    Logger.Error("plugin_setup_media: Session not found");
 }
 
 /*! \brief Method to handle an incoming RTP packet from a peer
@@ -106,7 +165,7 @@ void plugin_setup_media(janus_plugin_session *handle)
     * @param[in] len The buffer lenght */
 void plugin_incoming_rtp(janus_plugin_session *handle, int video, char *buf, int len)
 {
-
+    Logger.Info("plugin_incoming_rtp: Ignored");
 }
 
 /*! \brief Method to handle an incoming RTCP packet from a peer
@@ -116,7 +175,7 @@ void plugin_incoming_rtp(janus_plugin_session *handle, int video, char *buf, int
     * @param[in] len The buffer lenght */
 void plugin_incoming_rtcp(janus_plugin_session *handle, int video, char *buf, int len)
 {
-
+    Logger.Info("plugin_incoming_rtcp: Ignored");
 }
 
 /*! \brief Method to handle incoming SCTP/DataChannel data from a peer (text only, for the moment)
@@ -128,7 +187,7 @@ void plugin_incoming_rtcp(janus_plugin_session *handle, int video, char *buf, in
     * @param[in] len The buffer lenght */
 void plugin_incoming_data(janus_plugin_session *handle, char *buf, int len)
 {
-
+    Logger.Info("plugin_incoming_data: Ignored");
 }
 
 /*! \brief Method to be notified by the core when too many NACKs have
@@ -149,14 +208,23 @@ void plugin_incoming_data(janus_plugin_session *handle, char *buf, int len)
     * @param[in] video Whether this is related to an audio or a video stream */
 void plugin_slow_link(janus_plugin_session *handle, int uplink, int video)
 {
-
+    Logger.Info("plugin_slow_link: uplink=", uplink, " video=", video);
 }
 
 /*! \brief Callback to be notified about DTLS alerts from a peer (i.e., the PeerConnection is not valid any more)
     * @param[in] handle The plugin/gateway session used for this peer */
 void plugin_hangup_media(janus_plugin_session *handle)
 {
+    std::lock_guard<std::mutex> locker(m_Lock);
 
+    for (size_t i = 0; i < m_Clients.size(); ++i) {
+        if (m_Clients[i].handle == handle) {
+            Logger.Info("plugin_hangup_media: Session muted");
+            m_Clients[i].transmit = false;
+            return;
+        }
+    }
+    Logger.Error("plugin_hangup_media: Session not found");
 }
 
 /*! \brief Method to destroy a session/handle for a peer
@@ -164,7 +232,17 @@ void plugin_hangup_media(janus_plugin_session *handle)
     * @param[out] error An integer that may contain information about any error */
 void plugin_destroy_session(janus_plugin_session *handle, int *error)
 {
+    std::lock_guard<std::mutex> locker(m_Lock);
 
+    for (size_t i = 0; i < m_Clients.size(); ++i) {
+        if (m_Clients[i].handle == handle) {
+            Logger.Info("plugin_destroy_session: Session removed");
+            m_Clients[i] = m_Clients[m_Clients.size() - 1];
+            m_Clients.resize(m_Clients.size() - 1);
+            return;
+        }
+    }
+    Logger.Error("plugin_destroy_session: Session not found");
 }
 
 /*! \brief Method to get plugin-specific info of a session/handle
@@ -174,7 +252,7 @@ void plugin_destroy_session(janus_plugin_session *handle, int *error)
     * @returns A json_t object with the requested info */
 json_t *plugin_query_session(janus_plugin_session *handle)
 {
-    return nullptr;
+    return json_string("SessionInfoHere");
 }
 
 static janus_plugin m_Plugin = {

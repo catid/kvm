@@ -163,15 +163,17 @@ void VideoPipeline::Initialize(PiplineCallback callback)
                 {
                     //Logger.Info("Picture: slices=", picture.Ranges.size(), " bytes=", picture.TotalBytes);
 
+                    const bool is_keyframe = picture.Keyframe && VideoParameters;
+
                     int video_frame_bytes = picture.TotalBytes;
-                    if (picture.Keyframe && VideoParameters) {
+                    if (is_keyframe) {
                         video_frame_bytes += VideoParameters->size();
                     }
 
                     auto video_frame = std::make_shared<std::vector<uint8_t>>(video_frame_bytes);
                     uint8_t* dest = video_frame->data();
 
-                    if (picture.Keyframe && VideoParameters) {
+                    if (is_keyframe) {
                         memcpy(dest, VideoParameters->data(), VideoParameters->size());
                         dest += VideoParameters->size();
                     }
@@ -181,8 +183,8 @@ void VideoPipeline::Initialize(PiplineCallback callback)
                         dest += range.Bytes;
                     }
 
-                    AppNode.Queue([this, frame_number, shutter_usec, video_frame]() {
-                        Callback(frame_number, shutter_usec, video_frame->data(), video_frame->size());
+                    AppNode.Queue([this, frame_number, shutter_usec, is_keyframe, video_frame]() {
+                        Callback(frame_number, shutter_usec, video_frame->data(), video_frame->size(), is_keyframe);
                     });
                 }
             });
