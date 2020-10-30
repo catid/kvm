@@ -7,11 +7,13 @@ project(kvm_encode LANGUAGES CXX)
 
 set(INCLUDE_FILES
     include/kvm_encode.hpp
+    include/kvm_pipeline.hpp
 )
 
 set(SOURCE_FILES
     ${INCLUDE_FILES}
     src/kvm_encode.cpp
+    src/kvm_pipeline.cpp
 )
 
 
@@ -30,6 +32,8 @@ target_include_directories(kvm_encode
 target_link_libraries(kvm_encode
     PUBLIC
         kvm_core
+        kvm_turbojpeg
+        kvm_capture
         ${MMAL_LIB}
         ${MMAL_CORE_LIB}
         ${MMAL_UTIL_LIB}
@@ -43,8 +47,6 @@ install(FILES ${INCLUDE_FILES} DESTINATION include)
 
 add_executable(kvm_encode_test test/kvm_encode_test.cpp)
 target_link_libraries(kvm_encode_test
-    kvm_turbojpeg
-    kvm_capture
     kvm_encode
 )
 install(TARGETS kvm_encode_test DESTINATION bin)

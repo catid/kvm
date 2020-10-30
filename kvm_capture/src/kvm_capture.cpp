@@ -225,6 +225,9 @@ bool V4L2Capture::QueueBuffer(unsigned index)
 
 bool V4L2Capture::Start()
 {
+    if (fd < 0) {
+        return false;
+    }
     Logger.Info("STREAMON");
 
     int buf_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -238,6 +241,9 @@ bool V4L2Capture::Start()
 
 bool V4L2Capture::Stop()
 {
+    if (fd < 0) {
+        return true;
+    }
     Logger.Info("STREAMOFF");
 
     int buf_type = V4L2_BUF_TYPE_VIDEO_CAPTURE;

@@ -49,9 +49,9 @@ public:
         Settings = settings;
     }
 
-    bool Initialize(int width, int height, int input_encoding);
     void Shutdown();
 
+    // Pointer is valid until the next Encode() call
     uint8_t* Encode(const std::shared_ptr<Frame>& frame, bool force_keyframe, int& bytes);
 
 protected:
@@ -64,6 +64,8 @@ protected:
     MMAL_PORT_T* PortOut = nullptr;
 
     std::vector<uint8_t> Data;
+
+    bool Initialize(int width, int height, int input_encoding);
 };
 
 

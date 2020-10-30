@@ -1,3 +1,10 @@
+/*
+    TODO:
+    Encoder Pipeline
+    Video Parser
+    RTP Payloader
+*/
+
 #include <janus/plugins/plugin.h>
 
 static janus_callbacks *m_Callbacks = nullptr;
