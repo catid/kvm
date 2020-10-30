@@ -114,6 +114,10 @@ protected:
 
     VideoParser Parser;
 
+    std::shared_ptr<std::vector<uint8_t>> VideoParameters;
+
+    PipelineNode AppNode;
+
     std::atomic<bool> Terminated = ATOMIC_VAR_INIT(false);
 };
 

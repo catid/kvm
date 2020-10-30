@@ -53,6 +53,7 @@ static const int kMaxCopyRangesPerPicture = 16;
 
 struct PictureRanges
 {
+    bool Keyframe = false;
     std::vector<CopyRange> Ranges;
     int RangeCount = 0;
     int TotalBytes = 0;
@@ -83,7 +84,7 @@ struct VideoParser
 protected:
     void ParseNalUnitH264(uint8_t* data, int bytes);
     void ParseNalUnitHEVC(uint8_t* data, int bytes);
-    void AppendSlice(uint8_t* ptr, int bytes, bool new_picture);
+    void AppendSlice(uint8_t* ptr, int bytes, bool new_picture, bool keyframe);
 };
 
 

@@ -108,7 +108,7 @@ void VideoParser::Reset()
     WritePictureIndex = -1;
 }
 
-void VideoParser::AppendSlice(uint8_t* ptr, int bytes, bool new_picture)
+void VideoParser::AppendSlice(uint8_t* ptr, int bytes, bool new_picture, bool keyframe)
 {
     if (new_picture) {
         ++WritePictureIndex;
@@ -130,6 +130,7 @@ void VideoParser::AppendSlice(uint8_t* ptr, int bytes, bool new_picture)
 
     picture.Ranges.emplace_back(ptr, bytes);
     picture.TotalBytes += bytes;
+    picture.Keyframe = keyframe;
 }
 
 void VideoParser::ParseVideo(
@@ -172,15 +173,18 @@ void VideoParser::ParseNalUnitH264(uint8_t* data, int bytes)
     const unsigned nal_unit_type = header & 0x1f;
     //spdlog::info("NALU {} bytes nal_unit_type={} nal_ref_idc={}", bytes, nal_unit_type, nal_ref_idc);
 
+    bool keyframe = false;
     switch (nal_unit_type)
     {
     case 7: // Fall-thru
-    case 8: // Fall-thru
+    case 8:
         Parameters.emplace_back(data - 3, bytes + 3);
         TotalParameterBytes += bytes + 3;
         break;
-    case 5: // Fall-thru
-    case 1: // Fall-thru
+    case 5:
+        keyframe = true;
+        // Fall-thru
+    case 1:
         {
             ReadBitStream bs(data + 1, bytes - 1);
             unsigned first_mb_in_slice = ReadExpGolomb(bs);
@@ -189,7 +193,7 @@ void VideoParser::ParseNalUnitH264(uint8_t* data, int bytes)
             //spdlog::info("first_mb_in_slice={} slice_type={}", first_mb_in_slice, slice_type);
             // We are at the start of a new image when first_mb_in_slice = 0
 
-            AppendSlice(data - 3, bytes + 3, FirstSlice);
+            AppendSlice(data - 3, bytes + 3, FirstSlice, keyframe);
         }
         break;
     case 9: // Ignoring AUD
@@ -223,23 +227,27 @@ void VideoParser::ParseNalUnitHEVC(uint8_t* data, int bytes)
     //const unsigned nul_temporal_id = header & 7;
     //spdlog::info("NALU: {} bytes nal_unit_type={}", bytes, nal_unit_type);
 
+    bool keyframe = false;
     switch (nal_unit_type)
     {
     case 32: // Fall-thru
     case 33: // Fall-thru
-    case 34: // Fall-thru
+    case 34:
         Parameters.emplace_back(data - 3, bytes + 3);
         TotalParameterBytes += bytes + 3;
         break;
     case 19: // Fall-thru
+    case 20:
+        keyframe = true;
+        // Fall-thru
     case 1: // Fall-thru
-    case 21: // Fall-thru
+    case 21:
         {
             ReadBitStream bs(data + 2, bytes - 2);
             const bool FirstSlice = (bs.Read(1) != 0);
             //spdlog::info("FirstSlice = {}", FirstSlice);
 
-            AppendSlice(data - 3, bytes + 3, FirstSlice);
+            AppendSlice(data - 3, bytes + 3, FirstSlice, keyframe);
         }
         break;
     case 35: // Ignoring AUD

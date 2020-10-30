@@ -105,6 +105,7 @@ void VideoPipeline::Initialize(PiplineCallback callback)
 
     DecoderNode.Initialize("Decoder");
     EncoderNode.Initialize("Encoder");
+    AppNode.Initialize("App");
 
     MmalEncoderSettings settings;
     settings.Kbps = 4000;
@@ -135,6 +136,7 @@ void VideoPipeline::Initialize(PiplineCallback callback)
             {
                 int bytes = 0;
                 uint8_t* data = Encoder.Encode(frame, false, bytes);
+                Decoder.Release(frame);
 
                 // Parse the video into pictures and parameters
                 Parser.Reset();
@@ -146,19 +148,43 @@ void VideoPipeline::Initialize(PiplineCallback callback)
                     Logger.Warn("Video output includes more than one picture");
                 }
 
-                for (auto& param : Parser.Parameters)
+                if (!Parser.Parameters.empty())
                 {
-                    Logger.Info("Parameter Set: bytes=", param.Bytes);
+                    VideoParameters = std::make_shared<std::vector<uint8_t>>(Parser.TotalParameterBytes);
+
+                    uint8_t* dest = VideoParameters->data();
+                    for (auto& range : Parser.Parameters) {
+                        memcpy(dest, range.Ptr, range.Bytes);
+                        dest += range.Bytes;
+                    }
                 }
 
                 for (auto& picture : Parser.Pictures)
                 {
-                    Logger.Info("Picture: slices=", picture.Ranges.size(), " bytes=", picture.TotalBytes);
+                    //Logger.Info("Picture: slices=", picture.Ranges.size(), " bytes=", picture.TotalBytes);
+
+                    int video_frame_bytes = picture.TotalBytes;
+                    if (picture.Keyframe && VideoParameters) {
+                        video_frame_bytes += VideoParameters->size();
+                    }
+
+                    auto video_frame = std::make_shared<std::vector<uint8_t>>(video_frame_bytes);
+                    uint8_t* dest = video_frame->data();
+
+                    if (picture.Keyframe && VideoParameters) {
+                        memcpy(dest, VideoParameters->data(), VideoParameters->size());
+                        dest += VideoParameters->size();
+                    }
+
+                    for (auto& range : picture.Ranges) {
+                        memcpy(dest, range.Ptr, range.Bytes);
+                        dest += range.Bytes;
+                    }
+
+                    AppNode.Queue([this, frame_number, shutter_usec, video_frame]() {
+                        Callback(frame_number, shutter_usec, video_frame->data(), video_frame->size());
+                    });
                 }
-
-                Callback(frame_number, shutter_usec, data, bytes);
-
-                Decoder.Release(frame);
             });
         });
     });
@@ -175,6 +201,7 @@ void VideoPipeline::Shutdown()
 
     DecoderNode.Shutdown();
     EncoderNode.Shutdown();
+    AppNode.Shutdown();
 }
 
 
