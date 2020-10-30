@@ -136,6 +136,26 @@ void VideoPipeline::Initialize(PiplineCallback callback)
                 int bytes = 0;
                 uint8_t* data = Encoder.Encode(frame, false, bytes);
 
+                // Parse the video into pictures and parameters
+                Parser.Reset();
+                Parser.ParseVideo(false, data, bytes);
+
+                if (Parser.Pictures.empty()) {
+                    Logger.Error("Video output does not include a picture");
+                } else if (Parser.Pictures.size() > 1) {
+                    Logger.Warn("Video output includes more than one picture");
+                }
+
+                for (auto& param : Parser.Parameters)
+                {
+                    Logger.Info("Parameter Set: bytes=", param.Bytes);
+                }
+
+                for (auto& picture : Parser.Pictures)
+                {
+                    Logger.Info("Picture: slices=", picture.Ranges.size(), " bytes=", picture.TotalBytes);
+                }
+
                 Callback(frame_number, shutter_usec, data, bytes);
 
                 Decoder.Release(frame);

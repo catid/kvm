@@ -8,12 +8,14 @@ project(kvm_encode LANGUAGES CXX)
 set(INCLUDE_FILES
     include/kvm_encode.hpp
     include/kvm_pipeline.hpp
+    include/kvm_video.hpp
 )
 
 set(SOURCE_FILES
     ${INCLUDE_FILES}
     src/kvm_encode.cpp
     src/kvm_pipeline.cpp
+    src/kvm_video.cpp
 )
 
 

@@ -1,11 +1,17 @@
 // Copyright 2020 Christopher A. Taylor
 
+/*
+    Video Pipeline:
+    Camera -> JPEG Decode -> H.264 Encode -> Video Parser
+*/
+
 #pragma once
 
 #include "kvm_core.hpp"
 #include "kvm_capture.hpp"
 #include "kvm_turbojpeg.hpp"
 #include "kvm_encode.hpp"
+#include "kvm_video.hpp"
 
 #include <atomic>
 #include <thread>
@@ -13,6 +19,15 @@
 #include <condition_variable>
 
 namespace kvm {
+
+
+//------------------------------------------------------------------------------
+// ParsedVideo
+
+struct ParsedVideo
+{
+    std::vector<uint8_t> Data;
+};
 
 
 //------------------------------------------------------------------------------
@@ -96,6 +111,8 @@ protected:
 
     PipelineNode EncoderNode;
     MmalEncoder Encoder;
+
+    VideoParser Parser;
 
     std::atomic<bool> Terminated = ATOMIC_VAR_INIT(false);
 };
