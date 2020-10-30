@@ -26,6 +26,10 @@ void PipelineNode::Initialize(const std::string& name)
 void PipelineNode::Shutdown()
 {
     Terminated = true;
+    {
+        std::unique_lock<std::mutex> locker(Lock);
+        Condition.notify_all();
+    }
     JoinThread(Thread);
 
     QueuePrivate.clear();
@@ -56,6 +60,10 @@ void PipelineNode::Loop()
 
         for (auto& func : QueuePrivate)
         {
+            if (Terminated) {
+                break;
+            }
+
             const uint64_t t0 = GetTimeUsec();
 
             func();
@@ -89,9 +97,9 @@ void PipelineNode::Loop()
 
 
 //------------------------------------------------------------------------------
-// Video Pipeline
+// VideoPipeline
 
-void Pipeline::Initialize(PiplineCallback callback)
+void VideoPipeline::Initialize(PiplineCallback callback)
 {
     Callback = callback;
 
@@ -110,26 +118,33 @@ void Pipeline::Initialize(PiplineCallback callback)
         {
             //Logger.Info("Got frame #", buffer->FrameNumber, " bytes = ", buffer->ImageBytes);
 
+            uint64_t frame_number = buffer->FrameNumber;
+            uint64_t shutter_usec = buffer->ShutterUsec;
+
+            if (LastFrameNumber > 0 && frame_number - LastFrameNumber != 1) {
+                Logger.Warn("Camera skipped ", frame_number - LastFrameNumber, " frames");
+            }
+
             auto frame = Decoder.Decompress(buffer->Image, buffer->ImageBytes);
             if (!frame) {
                 Logger.Error("Failed to decode JPEG");
                 return;
             }
 
-            EncoderNode.Queue([this, frame]()
+            EncoderNode.Queue([this, frame, frame_number, shutter_usec]()
             {
                 int bytes = 0;
                 uint8_t* data = Encoder.Encode(frame, false, bytes);
 
-                Decoder.Release(frame);
+                Callback(frame_number, shutter_usec, data, bytes);
 
-                Logger.Info("FIXME: Parse encoder output here");
+                Decoder.Release(frame);
             });
         });
     });
 }
 
-void Pipeline::Shutdown()
+void VideoPipeline::Shutdown()
 {
     Terminated = true;
 

@@ -50,3 +50,11 @@ target_link_libraries(kvm_encode_test
     kvm_encode
 )
 install(TARGETS kvm_encode_test DESTINATION bin)
+
+# kvm_pipeline_test application
+
+add_executable(kvm_pipeline_test test/kvm_pipeline_test.cpp)
+target_link_libraries(kvm_pipeline_test
+    kvm_encode
+)
+install(TARGETS kvm_pipeline_test DESTINATION bin)

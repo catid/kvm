@@ -5,7 +5,7 @@
 
 namespace kvm {
 
-static logger::Channel Logger("Capture");
+static logger::Channel Logger("Encode");
 
 
 //------------------------------------------------------------------------------
@@ -452,7 +452,7 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_key
             eos = true;
         }
 
-        Logger.Info("Read video bytes: ", out->length);
+        //Logger.Info("Read video bytes: ", out->length);
 
         size_t previous_bytes = Data.size();
         Data.resize(previous_bytes + out->length);

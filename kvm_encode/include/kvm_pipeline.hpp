@@ -59,14 +59,18 @@ protected:
 
 
 //------------------------------------------------------------------------------
-// Video Pipeline
+// VideoPipeline
 
-using PiplineCallback = std::function<void(const uint8_t* data, int bytes)>;
+using PiplineCallback = std::function<void(
+    uint64_t frame_number,
+    uint64_t shutter_usec,
+    const uint8_t* data,
+    int bytes)>;
 
-class Pipeline
+class VideoPipeline
 {
 public:
-    ~Pipeline()
+    ~VideoPipeline()
     {
         Shutdown();
     }
@@ -85,6 +89,7 @@ protected:
     PiplineCallback Callback;
 
     V4L2Capture Capture;
+    uint64_t LastFrameNumber = 0;
 
     PipelineNode DecoderNode;
     TurboJpegDecoder Decoder;
