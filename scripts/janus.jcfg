@@ -1,0 +1,11 @@
+general: {
+    debug_level = 4
+    admin_secret = "janusoverlord"
+}
+nat: {
+    nice_debug = false
+    ice_lite = true
+    ice_tcp = false
+    full_trickle = true
+    ice_ignore_list = "vmnet"
+}

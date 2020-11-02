@@ -1,0 +1,15 @@
+general: {
+    json = "idented"
+    base_path = "/janus"
+    threads = "unlimited"
+    http = true
+    port = 8080
+    https = false
+}
+admin: {
+    admin_base_path = "/admin"
+    admin_threads = "unlimited"
+    admin_http = false
+    admin_port = 7088
+    admin_https = false
+}

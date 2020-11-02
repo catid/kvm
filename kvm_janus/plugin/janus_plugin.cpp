@@ -396,7 +396,11 @@ janus_plugin m_Plugin = {
     &plugin_query_session
 };
 
+extern "C" {
+
 janus_plugin* create()
 {
     return &m_Plugin;
 }
+
+} // extern "C"
