@@ -268,30 +268,6 @@ void VideoParser::ParseNalUnitHEVC(uint8_t* data, int bytes)
 
 
 //------------------------------------------------------------------------------
-// SDP
-
-std::string GenerateSDP(
-    const void* sps_data, int sps_bytes,
-    const void* pps_data, int pps_bytes,
-    int dest_port)
-{
-    std::vector<char> sps_b64(GetBase64LengthFromByteCount(sps_bytes) + 1);
-    std::vector<char> pps_b64(GetBase64LengthFromByteCount(pps_bytes) + 1);
-    WriteBase64Str(sps_data, sps_bytes, sps_b64.data(), sps_b64.size());
-    WriteBase64Str(pps_data, pps_bytes, pps_b64.data(), pps_b64.size());
-
-    ostringstream oss;
-    oss << "v=0" << endl;
-    oss << "m=video " << dest_port << " RTP/AVP 96" << endl;
-    oss << "c=IN IP4 127.0.0.1" << endl;
-    oss << "a=rtpmap:96 H264/90000" << endl;
-    oss << "a=fmtp:96 sprop-sps=" << sps_b64.data() << endl;
-    oss << "a=fmtp:96 sprop-pps=" << pps_b64.data() << endl;
-    return oss.str();
-}
-
-
-//------------------------------------------------------------------------------
 // RTP Payloader
 
 // https://nullprogram.com/blog/2018/07/31/
@@ -339,7 +315,6 @@ RtpPayloader::RtpPayloader()
 }
 
 void RtpPayloader::WrapH264Rtp(
-    uint64_t frame_number,
     uint64_t shutter_usec,
     const uint8_t* data,
     int bytes,
@@ -350,6 +325,17 @@ void RtpPayloader::WrapH264Rtp(
     EnumerateAnnexBNalus((uint8_t*)data, bytes, [&](uint8_t* nalu_data, int nalu_bytes) {
         const int nal_ref_idc = (nalu_data[0] >> 5) & 3;
         const int nal_unit_type = nalu_data[0] & 0x1f;
+
+        if (nal_unit_type == 7) {
+            std::lock_guard<std::mutex> locker(Lock);
+            SPS.resize(nalu_bytes);
+            memcpy(SPS.data(), nalu_data, nalu_bytes);
+        }
+        if (nal_unit_type == 8) {
+            std::lock_guard<std::mutex> locker(Lock);
+            PPS.resize(nalu_bytes);
+            memcpy(PPS.data(), nalu_data, nalu_bytes);
+        }
 
         // M=1 if this is an access unit
         const bool marked = nal_unit_type >= 1 && nal_unit_type <= 5;
@@ -376,7 +362,7 @@ void RtpPayloader::WrapH264Rtp(
         bool first = true;
         while (remaining > 0) {
             int frag_bytes = kDatagramBytes - kFuOverhead;
-            const bool last = remaining <= kDatagramBytes - kFuOverhead;
+            const bool last = remaining <= frag_bytes;
             if (last) {
                 frag_bytes = remaining;
             }
@@ -408,6 +394,40 @@ void RtpPayloader::WrapH264Rtp(
             first = false;
         }
     });
+}
+
+std::string RtpPayloader::GenerateSDP() const
+{
+    std::lock_guard<std::mutex> locker(Lock);
+
+    if (SPS.empty() || PPS.empty()) {
+        return "";
+    }
+
+    std::vector<char> sps_b64(GetBase64LengthFromByteCount(SPS.size()) + 1);
+    std::vector<char> pps_b64(GetBase64LengthFromByteCount(PPS.size()) + 1);
+    WriteBase64Str(SPS.data(), SPS.size(), sps_b64.data(), sps_b64.size());
+    WriteBase64Str(PPS.data(), PPS.size(), pps_b64.data(), pps_b64.size());
+
+    uint32_t seed = (uint32_t)GetTimeUsec();
+    uint64_t id = (uint64_t)triple32(seed) | ((uint64_t)triple32(seed + 12345) << 32);
+    id >>= 1;
+
+    ostringstream oss;
+    oss << "v=0" << endl;
+    oss << "o=- " << id << " 1 IN IP4 127.0.0.1" << endl;
+    oss << "s=Mountpoint 0" << endl;
+    oss << "t=0 0" << endl;
+    oss << "m=video 1 RTP/SAVPF 96" << endl;
+    oss << "c=IN IP4 0.0.0.0" << endl;
+    oss << "a=rtpmap:96 H264/90000" << endl;
+    oss << "a=fmtp:96 sprop-sps=" << sps_b64.data() << endl;
+    oss << "a=fmtp:96 sprop-pps=" << pps_b64.data() << endl;
+    oss << "a=rtcp-fb:96 nack" << endl;
+    oss << "a=rtcp-fb:96 nack pli" << endl;
+    oss << "a=rtcp-fb:96 goog-remb" << endl;
+    oss << "a=sendonly" << endl;
+    return oss.str();
 }
 
 

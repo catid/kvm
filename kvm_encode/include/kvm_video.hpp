@@ -111,16 +111,20 @@ public:
     RtpPayloader();
 
     void WrapH264Rtp(
-        uint64_t frame_number,
         uint64_t shutter_usec,
         const uint8_t* data,
         int bytes,
         RtpCallback callback);
 
+    std::string GenerateSDP() const;
+
 protected:
     uint16_t NextSequence = 0;
     uint32_t SSRC = 0;
     uint8_t Datagram[kDatagramBytes];
+
+    mutable std::mutex Lock;
+    std::vector<uint8_t> SPS, PPS;
 };
 
 

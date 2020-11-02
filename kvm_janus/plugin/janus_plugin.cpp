@@ -32,6 +32,10 @@ static janus_callbacks *m_Callbacks = nullptr;
 
 static RtpPayloader m_Payloader;
 
+static PipelineNode m_WorkerNode;
+
+extern janus_plugin m_Plugin;
+
 /*! \brief Plugin initialization/constructor
     * @param[in] callback The callback instance the plugin can use to contact the Janus core
     * @param[in] config_path Path of the folder where the configuration for this plugin can be found
@@ -39,6 +43,8 @@ static RtpPayloader m_Payloader;
 int plugin_init(janus_callbacks *callback, const char *config_path)
 {
     m_Callbacks = callback;
+
+    m_WorkerNode.Initialize("JanusWorker");
 
     m_Pipeline.Initialize([&](
         uint64_t frame_number,
@@ -48,11 +54,10 @@ int plugin_init(janus_callbacks *callback, const char *config_path)
     ) {
         std::lock_guard<std::mutex> locker(m_Lock);
 
-        m_Payloader.WrapH264Rtp(frame_number, shutter_usec, data, bytes,
+        m_Payloader.WrapH264Rtp(shutter_usec, data, bytes,
             [](const uint8_t* rtp_data, int rtp_bytes)
         {
-            for (auto& client : m_Clients)
-            {
+            for (auto& client : m_Clients) {
                 if (client.transmit) {
                     m_Callbacks->relay_rtp(client.handle, 1, (char*)rtp_data, rtp_bytes);
                 }
@@ -66,6 +71,7 @@ int plugin_init(janus_callbacks *callback, const char *config_path)
 /*! \brief Plugin deinitialization/destructor */
 void plugin_destroy(void)
 {
+    m_WorkerNode.Shutdown();
     m_Pipeline.Shutdown();
 }
 
@@ -129,6 +135,83 @@ void plugin_create_session(janus_plugin_session *handle, int *error)
     m_Clients.push_back(data);
 }
 
+static void post_error(janus_plugin_session *handle, const std::string& transaction, int error_code, const std::string& cause)
+{
+    Logger.Error("Error: ", cause);
+
+    json_t* event = json_object();
+    json_object_set_new(event, "streaming", json_string("event"));
+    json_object_set_new(event, "error_code", json_integer(error_code));
+    json_object_set_new(event, "error", json_string(cause.c_str()));
+    m_Callbacks->push_event(handle, &m_Plugin, transaction.c_str(), event, nullptr);
+    json_decref(event);
+}
+
+static void background_handle_message(janus_plugin_session *handle, const std::string& transaction, json_t *message, json_t *jsep)
+{
+    json_t* request_obj = json_object_get(message, "request");
+    if (!request_obj) {
+        post_error(handle, transaction, 1, "request missing");
+        return;
+    }
+
+    const char* request_str = json_string_value(request_obj);
+    if (request_str) {
+        post_error(handle, transaction, 2, "request not string");
+        return;
+    }
+
+    if (0 == strcmp(request_str, "stop"))
+    {
+        json_t* event = json_object();
+        json_object_set_new(event, "streaming", json_string("event"));
+        json_t* result = json_object();
+        json_object_set_new(result, "status", json_string("stopped"));
+        json_object_set_new(event, "result", result);
+        m_Callbacks->push_event(handle, &m_Plugin, transaction.c_str(), event, nullptr);
+        json_decref(event);
+        return;
+    }
+
+    if (0 == strcmp(request_str, "start"))
+    {
+        json_t* event = json_object();
+        json_object_set_new(event, "streaming", json_string("event"));
+        json_t* result = json_object();
+        json_object_set_new(result, "status", json_string("started"));
+        json_object_set_new(event, "result", result);
+        m_Callbacks->push_event(handle, &m_Plugin, transaction.c_str(), event, nullptr);
+        json_decref(event);
+        return;
+    }
+
+    if (0 == strcmp(request_str, "watch"))
+    {
+        std::string sdp = m_Payloader.GenerateSDP();
+
+        if (sdp.empty()) {
+            post_error(handle, transaction, 10, "video source not ready");
+            return;
+        }
+
+        json_t* jsep = json_pack("{ssss}", "type", "offer", "sdp", sdp.c_str());
+
+        json_t* result = json_object();
+        json_object_set_new(result, "status", json_string("started"));
+
+        json_t* event = json_object();
+        json_object_set_new(event, "streaming", json_string("event"));
+        json_object_set_new(event, "result", result);
+
+        m_Callbacks->push_event(handle, &m_Plugin, transaction.c_str(), event, jsep);
+        json_decref(event);
+        json_decref(jsep);
+        return;
+    }
+
+    post_error(handle, transaction, 100, std::string("unhandled request: ") + request_str);
+}
+
 /*! \brief Method to handle an incoming message/request from a peer
     * @param[in] handle The plugin/gateway session used for this peer
     * @param[in] transaction The transaction identifier for this message/request
@@ -138,7 +221,44 @@ void plugin_create_session(janus_plugin_session *handle, int *error)
     * (for asynchronously managed requests) or an error */
 struct janus_plugin_result *plugin_handle_message(janus_plugin_session *handle, char *transaction, json_t *message, json_t *jsep)
 {
-    // FIXME
+    ScopedFunction ref_scope([&]() {
+        if (message) {
+            json_decref(message);
+        }
+        if (jsep) {
+            json_decref(jsep);
+        }
+    });
+
+    janus_plugin_result* result = (janus_plugin_result*)malloc(sizeof(janus_plugin_result));
+    result->type = JANUS_PLUGIN_ERROR;
+    result->text = nullptr;
+    result->content = nullptr;
+    if (!handle || !handle->plugin_handle) {
+        result->text = "No session";
+        return result;
+    }
+    if (!message) {
+        result->text = "No message";
+        return result;
+    }
+
+    std::string transaction_str = transaction;
+    m_WorkerNode.Queue([handle, transaction_str, message, jsep]() {
+        ScopedFunction ref_scope([&]() {
+            if (message) {
+                json_decref(message);
+            }
+            if (jsep) {
+                json_decref(jsep);
+            }
+        });
+        background_handle_message(handle, transaction_str.c_str(), message, jsep);
+    });
+
+    ref_scope.Cancel();
+    result->type = JANUS_PLUGIN_OK_WAIT;
+    return result;
 }
 
 /*! \brief Callback to be notified when the associated PeerConnection is up and ready to be used
@@ -254,7 +374,7 @@ json_t *plugin_query_session(janus_plugin_session *handle)
     return json_string("SessionInfoHere");
 }
 
-static janus_plugin m_Plugin = {
+janus_plugin m_Plugin = {
     &plugin_init,
     &plugin_destroy,
     &plugin_get_api_compatibility,
