@@ -17,8 +17,6 @@ static logger::Channel Logger("plugin");
 
 #include <jansson.h>
 
-#include "janus_payloader.hpp"
-
 static VideoPipeline m_Pipeline;
 
 struct ClientData
@@ -32,6 +30,8 @@ static std::vector<ClientData> m_Clients;
 
 static janus_callbacks *m_Callbacks = nullptr;
 
+static RtpPayloader m_Payloader;
+
 /*! \brief Plugin initialization/constructor
     * @param[in] callback The callback instance the plugin can use to contact the Janus core
     * @param[in] config_path Path of the folder where the configuration for this plugin can be found
@@ -44,12 +44,11 @@ int plugin_init(janus_callbacks *callback, const char *config_path)
         uint64_t frame_number,
         uint64_t shutter_usec,
         const uint8_t* data,
-        int bytes,
-        bool keyframe
+        int bytes
     ) {
         std::lock_guard<std::mutex> locker(m_Lock);
 
-        janus::WrapH264Rtp(frame_number, shutter_usec, data, bytes, keyframe,
+        m_Payloader.WrapH264Rtp(frame_number, shutter_usec, data, bytes,
             [](const uint8_t* rtp_data, int rtp_bytes)
         {
             for (auto& client : m_Clients)

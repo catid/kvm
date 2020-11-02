@@ -49,11 +49,25 @@ bool V4L2Capture::Initialize(FrameHandler handler)
         Shutdown();
     });
 
-    fd = open(KVM_VIDEO_DEVICE, O_RDWR | O_NONBLOCK);
-    if (fd == -1) {
-        Logger.Error("Unable to open ", KVM_VIDEO_DEVICE, ": ", errno_str());
+    const char* devices[] = {
+        "/dev/video0",
+        nullptr
+    };
+
+    int index;
+    for (index = 0; devices[index]; ++index) {
+        fd = open(devices[index], O_RDWR | O_NONBLOCK);
+        if (fd >= 0) {
+            break;
+        } else {
+            Logger.Error("Unable to open ", devices[index], ": ", errno_str());
+        }
+    }
+    if (fd < 0) {
+        Logger.Error("No capture devices available");
         return false;
     }
+    Logger.Info("Opened device: ", devices[index]);
 
     if (!RequestBuffers(kCameraBufferCount)) {
         return false;

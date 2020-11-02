@@ -34,7 +34,7 @@ std::shared_ptr<Frame> TurboJpegDecoder::Decompress(const uint8_t* data, int byt
         &h,
         &subsamp);
     if (r != 0) {
-        Logger.Error("tjDecompressHeader2 failed");
+        Logger.Error("tjDecompressHeader2 failed: r=", r, " err=", tjGetErrorStr());
         return nullptr;
     }
 
@@ -74,7 +74,7 @@ std::shared_ptr<Frame> TurboJpegDecoder::Decompress(const uint8_t* data, int byt
         h,
         TJFLAG_ACCURATEDCT);
     if (r != 0) {
-        Logger.Error("tjDecompressToYUVPlanes failed");
+        Logger.Error("tjDecompressToYUVPlanes failed: r=", r, " err=", tjGetErrorStr());
         return nullptr;
     }
 

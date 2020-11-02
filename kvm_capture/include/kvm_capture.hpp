@@ -18,8 +18,6 @@ namespace kvm {
 //------------------------------------------------------------------------------
 // Constants
 
-#define KVM_VIDEO_DEVICE "/dev/video0"
-
 static const unsigned kCameraBufferCount = 8;
 
 

@@ -3,6 +3,9 @@
 #include "kvm_video.hpp"
 #include "kvm_logger.hpp"
 
+#include <sstream>
+using namespace std;
+
 namespace kvm {
 
 static logger::Channel Logger("VideoParser");
@@ -113,7 +116,7 @@ void VideoParser::AppendSlice(uint8_t* ptr, int bytes, bool new_picture, bool ke
     if (new_picture) {
         ++WritePictureIndex;
     }
-    if (WritePictureIndex >= Pictures.size()) {
+    if (WritePictureIndex >= (int)Pictures.size()) {
         Pictures.resize(WritePictureIndex + 1);
     }
     if (WritePictureIndex < 0) {
@@ -261,6 +264,150 @@ void VideoParser::ParseNalUnitHEVC(uint8_t* data, int bytes)
         Logger.Warn("Unhandled HEVC NAL unit {} in encoder output ignored", nal_unit_type);
         break;
     }
+}
+
+
+//------------------------------------------------------------------------------
+// SDP
+
+std::string GenerateSDP(
+    const void* sps_data, int sps_bytes,
+    const void* pps_data, int pps_bytes,
+    int dest_port)
+{
+    std::vector<char> sps_b64(GetBase64LengthFromByteCount(sps_bytes) + 1);
+    std::vector<char> pps_b64(GetBase64LengthFromByteCount(pps_bytes) + 1);
+    WriteBase64Str(sps_data, sps_bytes, sps_b64.data(), sps_b64.size());
+    WriteBase64Str(pps_data, pps_bytes, pps_b64.data(), pps_b64.size());
+
+    ostringstream oss;
+    oss << "v=0" << endl;
+    oss << "m=video " << dest_port << " RTP/AVP 96" << endl;
+    oss << "c=IN IP4 127.0.0.1" << endl;
+    oss << "a=rtpmap:96 H264/90000" << endl;
+    oss << "a=fmtp:96 sprop-sps=" << sps_b64.data() << endl;
+    oss << "a=fmtp:96 sprop-pps=" << pps_b64.data() << endl;
+    return oss.str();
+}
+
+
+//------------------------------------------------------------------------------
+// RTP Payloader
+
+// https://nullprogram.com/blog/2018/07/31/
+// exact bias: 0.020888578919738908
+uint32_t triple32(uint32_t x)
+{
+    x ^= x >> 17;
+    x *= UINT32_C(0xed5ad4bb);
+    x ^= x >> 11;
+    x *= UINT32_C(0xac4c1b51);
+    x ^= x >> 15;
+    x *= UINT32_C(0x31848bab);
+    x ^= x >> 14;
+    return x;
+}
+
+static void WriteRtpHeader(
+    uint8_t* dest,
+    bool marked,
+    uint16_t sequence_number,
+    uint32_t pts,
+    uint32_t ssrc)
+{
+    const int payload_type = 0x60;
+
+    uint32_t word0;
+    word0 = UINT32_C(0x80000000);
+    //word0 |= (CC & 0x0f) << 24;
+    if (marked) {
+        word0 |= 1 << 23;
+    }
+    word0 |= (payload_type & 0x7f) << 16;
+    word0 |= sequence_number;
+
+    WriteU32_BE(dest, word0);
+    WriteU32_BE(dest + 4, pts);
+    WriteU32_BE(dest + 8, ssrc);
+}
+
+static const int kRtpBytes = 12;
+
+RtpPayloader::RtpPayloader()
+{
+    SSRC = triple32((uint32_t)GetTimeUsec());
+}
+
+void RtpPayloader::WrapH264Rtp(
+    uint64_t frame_number,
+    uint64_t shutter_usec,
+    const uint8_t* data,
+    int bytes,
+    RtpCallback callback)
+{
+    const uint32_t pts = static_cast<uint32_t>( shutter_usec * 9 / 100 );
+
+    EnumerateAnnexBNalus((uint8_t*)data, bytes, [&](uint8_t* nalu_data, int nalu_bytes) {
+        const int nal_ref_idc = (nalu_data[0] >> 5) & 3;
+        const int nal_unit_type = nalu_data[0] & 0x1f;
+
+        // M=1 if this is an access unit
+        const bool marked = nal_unit_type >= 1 && nal_unit_type <= 5;
+
+        uint8_t* dest = Datagram;
+
+        if (nalu_bytes + kRtpBytes <= kDatagramBytes) {
+            WriteRtpHeader(
+                dest,
+                marked,
+                NextSequence++,
+                pts,
+                SSRC);
+            memcpy(dest + kRtpBytes, nalu_data, nalu_bytes);
+            callback(dest, kRtpBytes + nalu_bytes);
+            return;
+        }
+
+        const int kFuOverhead = kRtpBytes + 2; // FU-A overhead
+
+        const uint8_t* src = nalu_data + 1;
+        int remaining = nalu_bytes - 1;
+
+        bool first = true;
+        while (remaining > 0) {
+            int frag_bytes = kDatagramBytes - kFuOverhead;
+            const bool last = remaining <= kDatagramBytes - kFuOverhead;
+            if (last) {
+                frag_bytes = remaining;
+            }
+
+            WriteRtpHeader(
+                dest,
+                marked && last,
+                NextSequence++,
+                pts,
+                SSRC);
+
+            dest[kRtpBytes] = static_cast<uint8_t>( 28 | (nal_ref_idc << 5) );
+
+            uint8_t fu = static_cast<uint8_t>( nal_unit_type );
+            if (first) {
+                fu |= 0x80;
+            }
+            if (last) {
+                fu |= 0x40;
+            }
+            dest[kRtpBytes + 1] = fu;
+
+            memcpy(dest + kFuOverhead, src, frag_bytes);
+
+            callback(dest, kFuOverhead + frag_bytes);
+
+            src += frag_bytes;
+            remaining -= frag_bytes;
+            first = false;
+        }
+    });
 }
 
 

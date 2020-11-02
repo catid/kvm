@@ -80,8 +80,7 @@ using PiplineCallback = std::function<void(
     uint64_t frame_number,
     uint64_t shutter_usec,
     const uint8_t* data,
-    int bytes,
-    bool keyframes)>;
+    int bytes)>;
 
 class VideoPipeline
 {

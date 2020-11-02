@@ -43,10 +43,9 @@ int main(int argc, char* argv[])
         uint64_t frame_number,
         uint64_t shutter_usec,
         const uint8_t* data,
-        int bytes,
-        bool keyframe
+        int bytes
     ) {
-        Logger.Info("Writing ", keyframe ? "key" : "", "frame ", frame_number, " time=", shutter_usec, " bytes=", bytes);
+        Logger.Info("Writing frame ", frame_number, " time=", shutter_usec, " bytes=", bytes);
         file.write((const char*)data, bytes);
     });
     ScopedFunction pipeline_scope([&]() {

@@ -21,8 +21,6 @@ PKG_CHECK_MODULES(GLIB glib-2.0)
 
 set(SOURCE_FILES
     plugin/janus_plugin.cpp
-    include/janus_payloader.hpp
-    src/janus_payloader.cpp
 )
 
 

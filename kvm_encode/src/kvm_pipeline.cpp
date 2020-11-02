@@ -183,8 +183,8 @@ void VideoPipeline::Initialize(PiplineCallback callback)
                         dest += range.Bytes;
                     }
 
-                    AppNode.Queue([this, frame_number, shutter_usec, is_keyframe, video_frame]() {
-                        Callback(frame_number, shutter_usec, video_frame->data(), video_frame->size(), is_keyframe);
+                    AppNode.Queue([this, frame_number, shutter_usec, video_frame]() {
+                        Callback(frame_number, shutter_usec, video_frame->data(), video_frame->size());
                     });
                 }
             });

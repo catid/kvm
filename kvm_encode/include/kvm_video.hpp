@@ -88,4 +88,40 @@ protected:
 };
 
 
+//------------------------------------------------------------------------------
+// SDP
+
+std::string GenerateSDP(
+    const void* sps_data, int sps_bytes,
+    const void* pps_data, int pps_bytes,
+    int dest_port);
+
+
+//------------------------------------------------------------------------------
+// RTP Payloader
+
+using RtpCallback = std::function<void(const uint8_t* rtp_data, int rtp_bytes)>;
+
+class RtpPayloader
+{
+public:
+    // Maximum size of datagrams produced by RTP payloader
+    static const int kDatagramBytes = 1300;
+
+    RtpPayloader();
+
+    void WrapH264Rtp(
+        uint64_t frame_number,
+        uint64_t shutter_usec,
+        const uint8_t* data,
+        int bytes,
+        RtpCallback callback);
+
+protected:
+    uint16_t NextSequence = 0;
+    uint32_t SSRC = 0;
+    uint8_t Datagram[kDatagramBytes];
+};
+
+
 } // namespace kvm
