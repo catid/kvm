@@ -57,7 +57,7 @@ var spinner = null;
 
 var simulcastStarted = false, svcStarted = false;
 
-var selectedStream = null;
+var selectedStream = 0;
 
 
 $(document).ready(function() {
@@ -291,6 +291,7 @@ $(document).ready(function() {
 });
 
 function updateStreamsList() {
+/*
 	$('#update-streams').unbind('click').addClass('fa-spin');
 	var body = { request: "list" };
 	Janus.debug("Sending message:", body);
@@ -330,30 +331,13 @@ function updateStreamsList() {
 			});
 			$('#watch').removeAttr('disabled').unbind('click').click(startStream);
 		}
-	}});
-}
-
-function getStreamInfo() {
-	$('#metadata').empty();
-	$('#info').addClass('hide').hide();
-	if(!selectedStream)
-		return;
-	// Send a request for more info on the mountpoint we subscribed to
-	var body = { request: "info", id: parseInt(selectedStream) || selectedStream };
-	streaming.send({ message: body, success: function(result) {
-		if(result && result.info && result.info.metadata) {
-			$('#metadata').html(result.info.metadata);
-			$('#info').removeClass('hide').show();
-		}
-	}});
+    }});
+*/
+    $('#watch').removeAttr('disabled').unbind('click').click(startStream);
 }
 
 function startStream() {
 	Janus.log("Selected video id #" + selectedStream);
-	if(!selectedStream) {
-		bootbox.alert("Select a stream from the list");
-		return;
-	}
 	$('#streamset').attr('disabled', true);
 	$('#streamslist').attr('disabled', true);
 	$('#watch').attr('disabled', true).unbind('click');
@@ -367,8 +351,6 @@ function startStream() {
 	} else {
 		spinner.spin();
 	}
-	// Get some more info for the mountpoint to display, if any
-	getStreamInfo();
 }
 
 function stopStream() {

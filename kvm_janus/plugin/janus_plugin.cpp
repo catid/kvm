@@ -22,7 +22,7 @@ static VideoPipeline m_Pipeline;
 struct ClientData
 {
     janus_plugin_session *handle = nullptr;
-    bool transmit = false;
+    bool transmit = true;
 };
 
 static std::mutex m_Lock;
@@ -156,10 +156,12 @@ static void background_handle_message(janus_plugin_session *handle, const std::s
     }
 
     const char* request_str = json_string_value(request_obj);
-    if (request_str) {
+    if (!request_str) {
         post_error(handle, transaction, 2, "request not string");
         return;
     }
+
+    Logger.Info("Message: ", request_str);
 
     if (0 == strcmp(request_str, "stop"))
     {
@@ -193,6 +195,8 @@ static void background_handle_message(janus_plugin_session *handle, const std::s
             post_error(handle, transaction, 10, "video source not ready");
             return;
         }
+
+        Logger.Info("SDP: ", sdp);
 
         json_t* jsep = json_pack("{ssss}", "type", "offer", "sdp", sdp.c_str());
 
@@ -234,7 +238,7 @@ struct janus_plugin_result *plugin_handle_message(janus_plugin_session *handle, 
     result->type = JANUS_PLUGIN_ERROR;
     result->text = nullptr;
     result->content = nullptr;
-    if (!handle || !handle->plugin_handle) {
+    if (!handle) {
         result->text = "No session";
         return result;
     }
