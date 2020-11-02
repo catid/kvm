@@ -3,7 +3,7 @@ general: {
     base_path = "/janus"
     threads = "unlimited"
     http = true
-    port = 8080
+    port = 8088
     https = false
 }
 admin: {

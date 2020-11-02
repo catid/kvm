@@ -79,7 +79,7 @@ $(document).ready(function() {
 						// Attach to Streaming plugin
 						janus.attach(
 							{
-								plugin: "janus.plugin.streaming",
+								plugin: "kvm",
 								opaqueId: opaqueId,
 								success: function(pluginHandle) {
 									$('#details').remove();
