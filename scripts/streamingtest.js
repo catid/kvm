@@ -60,6 +60,18 @@ var simulcastStarted = false, svcStarted = false;
 var selectedStream = 0;
 
 
+// Just an helper to generate random usernames
+function randomString(len, charSet) {
+    charSet = charSet || 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var randomString = '';
+    for (var i = 0; i < len; i++) {
+    	var randomPoz = Math.floor(Math.random() * charSet.length);
+    	randomString += charSet.substring(randomPoz,randomPoz+1);
+    }
+    return randomString;
+}
+
+
 $(document).ready(function() {
 	// Initialize the library (all console debuggers enabled)
 	Janus.init({debug: "all", callback: function() {
@@ -182,7 +194,7 @@ $(document).ready(function() {
 									var addButtons = false;
 									if($('#remotevideo').length === 0) {
 										addButtons = true;
-										$('#stream').append('<video class="rounded centered hide" id="remotevideo" width=320 height=240 autoplay playsinline/>');
+										$('#stream').append('<video class="rounded centered hide" id="remotevideo" width=960 height=540 autoplay playsinline/>');
 										// Show the stream and hide the spinner when we get a playing event
 										$("#remotevideo").bind("playing", function () {
 											$('#waitingvideo').remove();
@@ -205,6 +217,32 @@ $(document).ready(function() {
 													$('#curres').removeClass('hide').text(width+'x'+height).show();
 												}, 2000);
 											}
+										});
+										$("#datasend").attr('disabled', false).bind("keypress", function (e) {
+
+                                            var theCode = e.keyCode ? e.keyCode : e.which ? e.which : e.charCode;
+                                            if(theCode != 13) {
+                                                return;
+                                            }
+
+                                            var data = $('#datasend').val();
+
+                                            var message = {
+                                                textroom: "message",
+                                                transaction: randomString(12),
+                                                text: data,
+                                            };
+                                            // Note: messages are always acknowledged by default. This means that you'll
+                                            // always receive a confirmation back that the message has been received by the
+                                            // server and forwarded to the recipients. If you do not want this to happen,
+                                            // just add an ack:false property to the message above, and server won't send
+                                            // you a response (meaning you just have to hope it succeeded).
+                                            streaming.data({
+                                                text: JSON.stringify(message),
+                                                error: function(reason) { bootbox.alert(reason); },
+                                                success: function() { $('#datasend').val(''); }
+                                            });
+
 										});
 									}
 									Janus.attachMediaStream($('#remotevideo').get(0), stream);
@@ -271,7 +309,8 @@ $(document).ready(function() {
 									$('#curres').hide();
 									$('#simulcast').remove();
 									$('#metadata').empty();
-									$('#info').addClass('hide').hide();
+                                    $('#info').addClass('hide').hide();
+                                    $('#datasend').attr('disabled', true);
 									simulcastStarted = false;
 								}
 							});
@@ -344,7 +383,7 @@ function startStream() {
 	var body = { request: "watch", id: parseInt(selectedStream) || selectedStream};
 	streaming.send({ message: body });
 	// No remote video yet
-	$('#stream').append('<video class="rounded centered" id="waitingvideo" width=320 height=240 />');
+	$('#stream').append('<video class="rounded centered" id="waitingvideo" width=960 height=540 />');
 	if(spinner == null) {
 		var target = document.getElementById('stream');
 		spinner = new Spinner({top:100}).spin(target);

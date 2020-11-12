@@ -310,7 +310,7 @@ void plugin_incoming_rtcp(janus_plugin_session *handle, int video, char *buf, in
     * @param[in] len The buffer lenght */
 void plugin_incoming_data(janus_plugin_session *handle, char *buf, int len)
 {
-    Logger.Info("plugin_incoming_data: Ignored");
+    Logger.Info("plugin_incoming_data: Ignored len=", len);
 }
 
 /*! \brief Method to be notified by the core when too many NACKs have

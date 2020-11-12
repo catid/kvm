@@ -51,6 +51,7 @@ bool V4L2Capture::Initialize(FrameHandler handler)
 
     const char* devices[] = {
         "/dev/video0",
+        "/dev/video2",
         nullptr
     };
 

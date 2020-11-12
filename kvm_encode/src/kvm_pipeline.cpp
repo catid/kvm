@@ -108,7 +108,7 @@ void VideoPipeline::Initialize(PiplineCallback callback)
     AppNode.Initialize("App");
 
     MmalEncoderSettings settings;
-    settings.Kbps = 4000;
+    settings.Kbps = 8000;
     settings.Framerate = 30;
     settings.GopSize = 12;
     Encoder.SetSettings(settings);

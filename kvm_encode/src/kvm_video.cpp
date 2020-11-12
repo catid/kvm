@@ -414,19 +414,20 @@ std::string RtpPayloader::GenerateSDP() const
     id >>= 1;
 
     ostringstream oss;
-    oss << "v=0" << endl;
-    oss << "o=- " << id << " 1 IN IP4 127.0.0.1" << endl;
-    oss << "s=Mountpoint 0" << endl;
-    oss << "t=0 0" << endl;
-    oss << "m=video 1 RTP/SAVPF 96" << endl;
-    oss << "c=IN IP4 0.0.0.0" << endl;
-    oss << "a=rtpmap:96 H264/90000" << endl;
-    oss << "a=fmtp:96 sprop-sps=" << sps_b64.data() << endl;
-    oss << "a=fmtp:96 sprop-pps=" << pps_b64.data() << endl;
-    oss << "a=rtcp-fb:96 nack" << endl;
-    oss << "a=rtcp-fb:96 nack pli" << endl;
-    oss << "a=rtcp-fb:96 goog-remb" << endl;
-    oss << "a=sendonly" << endl;
+    oss << "v=0\r\n";
+    oss << "o=- " << id << " 1 IN IP4 127.0.0.1\r\n";
+    oss << "s=Mountpoint 0\r\n";
+    oss << "t=0 0\r\n";
+    oss << "m=video 1 RTP/SAVPF 96\r\n";
+    oss << "c=IN IP4 0.0.0.0\r\n";
+    oss << "a=rtpmap:96 H264/90000\r\n";
+    oss << "a=fmtp:96 sprop-sps=" << sps_b64.data() << "\r\n";
+    oss << "a=fmtp:96 sprop-pps=" << pps_b64.data() << "\r\n";
+    oss << "a=rtcp-fb:96 nack\r\n";
+    oss << "a=rtcp-fb:96 nack pli\r\n";
+    oss << "a=rtcp-fb:96 goog-remb\r\n";
+    oss << "a=sendonly\r\n";
+    oss << "a=extmap:1 urn:ietf:params:rtp-hdrext:sdes:mid";
     return oss.str();
 }
 
