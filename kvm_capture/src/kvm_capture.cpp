@@ -113,6 +113,8 @@ bool V4L2Capture::Initialize(FrameHandler handler)
         }
 
         auto& buffer = Buffers[i];
+        buffer.Queued = false;
+        buffer.AppOwns = false;
         buffer.Bytes = buf.length;
         buffer.Image = (uint8_t*)mmap(
             nullptr,
