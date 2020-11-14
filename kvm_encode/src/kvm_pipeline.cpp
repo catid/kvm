@@ -114,18 +114,53 @@ void VideoPipeline::Loop()
 {
     Start();
 
+    uint64_t t0 = GetTimeMsec();
+
+    int consecutive_waits = 0;
+
     while (!Terminated)
     {
         if (ErrorState || Capture.IsError()) {
             Logger.Info("Capture failure: Stopping pipeline!");
             Stop();
+
+            uint64_t t1 = GetTimeMsec();
+            int64_t dt = t1 - t0;
+
+            int64_t back_off_msec = (consecutive_waits + 1) * 1000;
+
+            if (dt < back_off_msec) {
+                Logger.Warn("Waiting before retrying... ", back_off_msec / 1000.f, " sec");
+
+                int waits = (back_off_msec - dt + 100 - 1) / 100;
+                for (int i = 0; i < waits; ++i) {
+                    ThreadSleepForMsec(100);
+                    if (Terminated) {
+                        break;
+                    }
+                }
+
+                ++consecutive_waits;
+                if (consecutive_waits > 4) {
+                    consecutive_waits = 4;
+                }
+            } else {
+                consecutive_waits = 0;
+            }
+
+            if (Terminated) {
+                break;
+            }
+
             Logger.Info("Capture failure: Restarting pipeline!");
             Start();
+
+            t0 = GetTimeMsec();
         }
 
         Stats.TryReport();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        ThreadSleepForMsec(100);
     }
 
     Stop();
@@ -139,19 +174,17 @@ void VideoPipeline::Shutdown()
 
 void VideoPipeline::Start()
 {
-    ErrorState = false;
-
     DecoderNode.Initialize("Decoder");
     EncoderNode.Initialize("Encoder");
     AppNode.Initialize("App");
 
     MmalEncoderSettings settings;
-    settings.Kbps = 8000;
+    settings.Kbps = 7000;
     settings.Framerate = 30;
     settings.GopSize = 12;
     Encoder.SetSettings(settings);
 
-    Capture.Initialize([this](const std::shared_ptr<CameraFrame>& buffer)
+    bool capture_okay = Capture.Initialize([this](const std::shared_ptr<CameraFrame>& buffer)
     {
         DecoderNode.Queue([this, buffer]()
         {
@@ -166,6 +199,8 @@ void VideoPipeline::Start()
 
             auto frame = Decoder.Decompress(buffer->Image, buffer->ImageBytes);
             if (!frame) {
+                // Note that JPEG decode failures happen a lot when plugged into USB2 ports,
+                // so this is not a critical error.
                 Logger.Error("Failed to decode JPEG");
                 return;
             }
@@ -239,6 +274,8 @@ void VideoPipeline::Start()
             });
         });
     });
+
+    ErrorState = !capture_okay;
 }
 
 void VideoPipeline::Stop()

@@ -246,7 +246,7 @@ bool V4L2Capture::QueueBuffer(unsigned index)
 {
     auto& buffer = Buffers[index];
     if (buffer.Queued) {
-        Logger.Error("Double queue");
+        Logger.Error("FIXME: Double queue");
     }
     buffer.Queued = true;
     buffer.AppOwns = false;
@@ -320,6 +320,14 @@ bool V4L2Capture::AcquireFrame()
     r = safe_ioctl(fd, VIDIOC_DQBUF, &buf);
     if (r < 0) {
         Logger.Error("VIDIOC_DQBUF failed: ", errno_str());
+
+        // Flag error state instantly on device removal error
+        if (errno == ENODEV || errno == EINVAL) {
+            ErrorState = true;
+            Terminated = true;
+            ThreadSleepForMsec(100);
+        }
+
         return false;
     }
 
