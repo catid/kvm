@@ -74,6 +74,41 @@ protected:
 
 
 //------------------------------------------------------------------------------
+// PiplineStatistics
+
+/*
+    Report statistics on how well we are compressing the input data
+*/
+class PiplineStatistics
+{
+public:
+    void AddInput(int bytes);
+    void AddVideo(int bytes);
+    void OnOutputFrame();
+
+    void TryReport();
+
+private:
+    std::mutex Lock;
+
+    static const int64_t ReportIntervalUsec = 20 * 1000 * 1000; // 20 seconds
+
+    uint64_t LastReportUsec = 0;
+
+    int InputBytes = 0;
+    int InputCount = 0;
+
+    int VideoBytes = 0;
+    int VideoCount = 0;
+
+    uint64_t LastOutputFrameUsec = 0;
+    uint64_t LastOutputReportUsec = 0;
+
+    void Report();
+};
+
+
+//------------------------------------------------------------------------------
 // VideoPipeline
 
 using PiplineCallback = std::function<void(
@@ -92,12 +127,9 @@ public:
     void Initialize(PiplineCallback callback);
     void Shutdown();
 
-    bool IsTerminated()
+    bool IsTerminated() const
     {
-        return Capture.IsError() ||
-            Terminated ||
-            EncoderNode.IsTerminated() ||
-            DecoderNode.IsTerminated();
+        return Terminated;
     }
 
 protected:
@@ -119,6 +151,14 @@ protected:
     PipelineNode AppNode;
 
     std::atomic<bool> Terminated = ATOMIC_VAR_INIT(false);
+    std::atomic<bool> ErrorState = ATOMIC_VAR_INIT(false);
+    std::shared_ptr<std::thread> Thread;
+
+    PiplineStatistics Stats;
+
+    void Start();
+    void Stop();
+    void Loop();
 };
 
 

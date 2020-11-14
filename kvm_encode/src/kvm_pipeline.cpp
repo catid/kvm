@@ -84,10 +84,13 @@ void PipelineNode::Loop()
 
             const int64_t report_interval_usec = 20 * 1000 * 1000;
             if (t1 - LastReportUsec > report_interval_usec) {
-                LastReportUsec = t1;
-                Logger.Info(Name, " stats: ", Count, " frames, avg=",
+                Logger.Info(Name, ": ", Count, " frames, avg=",
                     TotalUsec / (float)Count / 1000.f, ", min=",
                     FastestUsec / 1000.f, ", max=", SlowestUsec / 1000.f, " (msec)");
+
+                Count = 0;
+                TotalUsec = 0;
+                LastReportUsec = t1;
             }
         }
 
@@ -102,6 +105,41 @@ void PipelineNode::Loop()
 void VideoPipeline::Initialize(PiplineCallback callback)
 {
     Callback = callback;
+
+    Terminated = false;
+    Thread = std::make_shared<std::thread>(&VideoPipeline::Loop, this);
+}
+
+void VideoPipeline::Loop()
+{
+    Start();
+
+    while (!Terminated)
+    {
+        if (ErrorState || Capture.IsError()) {
+            Logger.Info("Capture failure: Stopping pipeline!");
+            Stop();
+            Logger.Info("Capture failure: Restarting pipeline!");
+            Start();
+        }
+
+        Stats.TryReport();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+
+    Stop();
+}
+
+void VideoPipeline::Shutdown()
+{
+    Terminated = true;
+    JoinThread(Thread);
+}
+
+void VideoPipeline::Start()
+{
+    ErrorState = false;
 
     DecoderNode.Initialize("Decoder");
     EncoderNode.Initialize("Encoder");
@@ -132,11 +170,20 @@ void VideoPipeline::Initialize(PiplineCallback callback)
                 return;
             }
 
+            Stats.AddInput(buffer->ImageBytes);
+
             EncoderNode.Queue([this, frame, frame_number, shutter_usec]()
             {
                 int bytes = 0;
                 uint8_t* data = Encoder.Encode(frame, false, bytes);
+                if (!data) {
+                    Logger.Error("Encoder.Encode failed");
+                    ErrorState = true;
+                    return;
+                }
                 Decoder.Release(frame);
+
+                Stats.AddVideo(bytes);
 
                 // Parse the video into pictures and parameters
                 Parser.Reset();
@@ -186,16 +233,16 @@ void VideoPipeline::Initialize(PiplineCallback callback)
                     AppNode.Queue([this, frame_number, shutter_usec, video_frame]() {
                         Callback(frame_number, shutter_usec, video_frame->data(), video_frame->size());
                     });
+
+                    Stats.OnOutputFrame();
                 }
             });
         });
     });
 }
 
-void VideoPipeline::Shutdown()
+void VideoPipeline::Stop()
 {
-    Terminated = true;
-
     Capture.Stop();
 
     Encoder.Shutdown();
@@ -204,6 +251,90 @@ void VideoPipeline::Shutdown()
     DecoderNode.Shutdown();
     EncoderNode.Shutdown();
     AppNode.Shutdown();
+}
+
+
+//------------------------------------------------------------------------------
+// PiplineStatistics
+
+void PiplineStatistics::AddInput(int bytes)
+{
+    std::lock_guard<std::mutex> locker(Lock);
+    InputBytes += bytes;
+    InputCount++;
+}
+
+void PiplineStatistics::AddVideo(int bytes)
+{
+    std::lock_guard<std::mutex> locker(Lock);
+    VideoBytes += bytes;
+    VideoCount++;
+}
+
+void PiplineStatistics::OnOutputFrame()
+{
+    std::lock_guard<std::mutex> locker(Lock);
+    LastOutputFrameUsec = GetTimeUsec();
+}
+
+void PiplineStatistics::TryReport()
+{
+    std::lock_guard<std::mutex> locker(Lock);
+    uint64_t now_usec = GetTimeUsec();
+
+    {
+        // Warn if more than a second passes with no output video frames
+        const int64_t warn_usec = 1000 * 1000;
+
+        int64_t dt = now_usec - LastOutputFrameUsec;
+        if (dt > warn_usec) {
+            int64_t report_dt = now_usec - LastOutputReportUsec;
+            const int64_t report_interval_usec = 2 * 1000 * 1000;
+            if (report_dt >= report_interval_usec) {
+                if (LastOutputFrameUsec == 0) {
+                    Logger.Warn("Warning: No frames produced yet");
+                } else {
+                    Logger.Warn("Warning: No frames produced in ", (dt / 1000.f), " msec");
+                }
+                LastOutputReportUsec = now_usec;
+            }
+        }
+    }
+
+    int64_t dt = now_usec - LastReportUsec;
+
+    if (dt >= ReportIntervalUsec) {
+        if (LastReportUsec != 0) {
+            Report();
+        }
+
+        InputBytes = 0;
+        InputCount = 0;
+
+        VideoBytes = 0;
+        VideoCount = 0;
+
+        LastReportUsec = now_usec;
+    }
+}
+
+void PiplineStatistics::Report()
+{
+    if (InputCount <= 0 || VideoCount <= 0) {
+        Logger.Info("Statistics: ", InputCount, " input frames, ", VideoCount, " video frames");
+        return;
+    }
+
+    const float avg_input = InputBytes / 1000.f / InputCount;
+    const float avg_video = VideoBytes / 1000.f / VideoCount;
+
+    float ratio = 0.f;
+    if (avg_video > 0.00001f) {
+        ratio = avg_input / avg_video;
+    }
+
+    Logger.Info("Statistics: ", InputCount, " input frames [", avg_input, " KB (avg)], ",
+        VideoCount, " video frames [", avg_video, " KB (avg)], compression ratio = ", ratio, ":1");
 }
 
 

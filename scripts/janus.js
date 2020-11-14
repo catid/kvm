@@ -1912,7 +1912,7 @@ function Janus(gatewayCallbacks) {
 							trackMutedTimeoutId = null;
 						// Chrome seems to raise mute events only at multiples of 834ms;
 						// we set the timeout to three times this value (rounded to 840ms)
-						}, 3 * 840);
+						}, 15 * 1000);
 					}
 				};
 				event.track.onunmute = function(ev) {

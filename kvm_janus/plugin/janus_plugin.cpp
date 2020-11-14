@@ -298,7 +298,7 @@ void plugin_incoming_rtp(janus_plugin_session *handle, int video, char *buf, int
     * @param[in] len The buffer lenght */
 void plugin_incoming_rtcp(janus_plugin_session *handle, int video, char *buf, int len)
 {
-    Logger.Info("plugin_incoming_rtcp: Ignored");
+    //Logger.Info("plugin_incoming_rtcp: Ignored");
 }
 
 /*! \brief Method to handle incoming SCTP/DataChannel data from a peer (text only, for the moment)
