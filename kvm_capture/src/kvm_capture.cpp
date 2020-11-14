@@ -51,18 +51,43 @@ bool V4L2Capture::Initialize(FrameHandler handler)
 
     const char* devices[] = {
         "/dev/video0",
+        "/dev/video1",
         "/dev/video2",
+        "/dev/video3",
         nullptr
     };
 
     int index;
-    for (index = 0; devices[index]; ++index) {
+    for (index = 0; devices[index]; ++index)
+    {
+        // Open device
         fd = open(devices[index], O_RDWR | O_NONBLOCK);
-        if (fd >= 0) {
-            break;
-        } else {
+        if (fd <= 0) {
             Logger.Error("Unable to open ", devices[index], ": ", errno_str());
         }
+
+        // Check if it is a video capture device
+        int input = 0;
+        if (safe_ioctl(fd, VIDIOC_G_INPUT, &input) == 0) {
+            struct v4l2_input vin;
+
+            vin.index = input;
+            if (safe_ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0) {
+                if (vin.status == 0) {
+                    Logger.Info("Video ", devices[index], " input ", input, " (", vin.name, ": OK)");
+                    break;
+                }
+
+                Logger.Error("Video ", devices[index], " input ", input, " (", vin.name, ": err=0x", std::hex, vin.status, ")");
+            } else {
+                Logger.Error("Video ", devices[index], " input ", input, " VIDIOC_ENUMINPUT failed");
+            }
+        } else {
+            Logger.Error("Video ", devices[index], " VIDIOC_ENUMINPUT failed");
+        }
+
+        close(fd);
+        fd = -1;
     }
     if (fd < 0) {
         Logger.Error("No capture devices available");
