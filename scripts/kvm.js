@@ -39,6 +39,9 @@ function watchStream() {
     handle.send({"message": body});
 }
 
+// http://www.javascriptkeycode.com/
+// https://www.asciitable.com/
+// https://api.jquery.com/keyup/
 function serializeKey(event) {
     var s = String.fromCharCode(event.which);
     if (event.altKey) {
