@@ -1598,8 +1598,8 @@ function Janus(gatewayCallbacks) {
 			callbacks.success();
 			return;
 		}
-		Janus.log("Sending data on data channel <" + label + ">");
-		Janus.debug(data);
+		//Janus.log("Sending data on data channel <" + label + ">");
+		//Janus.debug(data);
 		config.dataChannel[label].send(data);
 		callbacks.success();
 	}

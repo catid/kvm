@@ -11,6 +11,12 @@ var opaqueId = "oid-"+Janus.randomString(12);
 var bitrateTimer = null;
 
 
+function sendData(text) {
+    handle.data({
+        text: text
+    });
+}
+
 function stopBitrateTimer() {
     if (bitrateTimer) {
         clearInterval(bitrateTimer);
@@ -33,6 +39,72 @@ function watchStream() {
     handle.send({"message": body});
 }
 
+function serializeKey(event) {
+    var s = String.fromCharCode(event.which);
+    if (event.altKey) {
+        s += "a"; // ALT flag
+    }
+    if (event.ctrlKey) {
+        s += "c"; // CTRL flag
+    }
+    if (event.which >= 65 && event.which <= 90) {
+        var code = event.key.charCodeAt(0);
+        if (code >= 97) {
+            s += "l"; // Lower-case flag
+        }
+    }
+    else if (event.which == 16) {
+        if (event.code == "ShiftRight") {
+            s += "r"; // Right flag
+        }
+    }
+    else if (event.which == 17) {
+        if (event.code == "ControlRight") {
+            s += "r"; // Right flag
+        }
+    }
+    else if (event.which == 18) {
+        if (event.code == "AltRight") {
+            s += "r"; // Right flag
+        }
+    }
+    else if (event.which >= 48 && event.which <= 57) {
+        // 0-9
+        if (event.shiftKey) {
+            s += "s"; // Shift key flag
+        }
+    }
+    else if (event.which >= 186 && event.which <= 222) {
+        // ; to '
+        if (event.shiftKey) {
+            s += "s"; // Shift key flag
+        }
+    }
+    return s;
+}
+
+var LastKeyDown;
+
+function startCapture() {
+    $(document).keydown(function(event){
+        var data = "D" + serializeKey(event);
+        if (data == LastKeyDown) {
+            return;
+        }
+        sendData(data);
+        LastKeyDown = data;
+    });
+    $(document).keyup(function(event){
+        sendData("U" + serializeKey(event));
+        LastKeyDown = null;
+    });
+}
+
+function stopCapture() {
+    $(document).off("keydown");
+    $(document).off("keyup");
+}
+
 function startStream(jsep) {
     console.log("startStream");
     var body = { request: "start" };
@@ -41,6 +113,7 @@ function startStream(jsep) {
 
 function stopStream() {
     stopBitrateTimer();
+    stopCapture();
     console.log("stopStream");
     var body = { request: "stop" };
     handle.send({ message: body });
@@ -69,8 +142,8 @@ function attachStream() {
         onmessage: function(msg, jsep) {
             Janus.debug(" ::: Got a message :::", msg);
             var result = msg["result"];
-            if(result) {
-                if(result["status"]) {
+            if (result) {
+                if (result["status"]) {
                     var status = result["status"];
                     if(status === 'starting') {
                         $("#status-text").text("starting");
@@ -83,7 +156,7 @@ function attachStream() {
                         stopStream();
                     }
                 }
-            } else if(msg["error"]) {
+            } else if (msg["error"]) {
                 console.error(msg["error"]);
                 stopStream();
                 return;
@@ -92,45 +165,26 @@ function attachStream() {
             if(jsep) {
                 Janus.debug("Handling SDP as well...", jsep);
                 // Offer from the plugin, let's answer
-                handle.createAnswer(
-                    {
-                        jsep: jsep,
-                        // We want recvonly audio/video and, if negotiated, datachannels
-                        media: { audioSend: false, videoSend: false, data: true },
-                        customizeSdp: function(jsep) {
-                            // Modify jsep.sdp here
-                        },
-                        success: function(jsep) {
-                            Janus.debug("Got SDP!", jsep);
-                            startStream(jsep);
-                        },
-                        error: function(error) {
-                            Janus.error("WebRTC error:", error);
-                        }
-                    });
+                handle.createAnswer({
+                    jsep: jsep,
+                    // We want recvonly audio/video and, if negotiated, datachannels
+                    media: { audioSend: false, videoSend: false, data: true },
+                    customizeSdp: function(jsep) {
+                        // Modify jsep.sdp here
+                    },
+                    success: function(jsep) {
+                        Janus.debug("Got SDP!", jsep);
+                        startStream(jsep);
+                    },
+                    error: function(error) {
+                        Janus.error("WebRTC error:", error);
+                    }
+                });
             }
         },
         ondataopen: function(data) {
             Janus.log("The DataChannel is available!");
-            var message = {
-                kvm: "message",
-                transaction: Janus.randomString(12),
-                text: "test message"
-            };
-            // Note: messages are always acknowledged by default. This means that you'll
-            // always receive a confirmation back that the message has been received by the
-            // server and forwarded to the recipients. If you do not want this to happen,
-            // just add an ack:false property to the message above, and server won't send
-            // you a response (meaning you just have to hope it succeeded).
-            handle.data({
-                text: JSON.stringify(message),
-                error: function(reason) {
-                    console.error("Data send failed: ", reason);
-                },
-                success: function() {
-                    console.log("Data send completed");
-                }
-            });
+            startCapture();
         },
         ondata: function(data) {
             Janus.debug("We got data from the DataChannel: ", data);
@@ -140,15 +194,10 @@ function attachStream() {
             Janus.attachMediaStream($('#remotevideo').get(0), stream);
             startBitrateTimer();
         },
-        ondataopen: function(data) {
-            Janus.log("The DataChannel is available!");
-        },
-        ondata: function(data) {
-            Janus.debug("We got data from the DataChannel!", data);
-        },
         oncleanup: function() {
             Janus.log(" ::: Got a cleanup notification :::");
             stopBitrateTimer();
+            stopCapture();
         }
     });
 }

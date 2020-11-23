@@ -416,7 +416,7 @@ std::string RtpPayloader::GenerateSDP() const
     ostringstream oss;
     oss << "v=0\r\n";
     oss << "o=- " << id << " 1 IN IP4 127.0.0.1\r\n";
-    oss << "s=Mountpoint 0\r\n";
+    oss << "s=Raspberry Pi Video\r\n";
     oss << "t=0 0\r\n";
     oss << "m=video 1 RTP/SAVPF 96\r\n";
     oss << "c=IN IP4 0.0.0.0\r\n";
@@ -427,7 +427,6 @@ std::string RtpPayloader::GenerateSDP() const
     oss << "a=rtcp-fb:96 nack pli\r\n";
     oss << "a=rtcp-fb:96 goog-remb\r\n";
     oss << "a=sendonly\r\n";
-    //oss << "a=extmap:1 urn:ietf:params:rtp-hdrext:sdes:mid";
     return oss.str();
 }
 
