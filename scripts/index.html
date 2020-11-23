@@ -5,80 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <title>Raspberry Pi : HDMI Live Stream</title>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.4.0/adapter.min.js" ></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/7.4.0/adapter.min.js" ></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js" ></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.4.0/bootbox.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
 <script type="text/javascript" src="janus.js" ></script>
-<script type="text/javascript" src="streamingtest.js"></script>
+<script type="text/javascript" src="kvm.js"></script>
 </head>
 <body>
 
-<div class="container">
-	<div class="row">
-		<div class="col-md-12">
-			<div class="page-header">
-				<h1>Plugin Demo: Streaming
-					<button class="btn btn-default" autocomplete="off" id="start">Start</button>
-				</h1>
-			</div>
-			<div class="container hide" id="streams">
-				<div class="col-md-6">
-					<div class="row">
-						<div class="panel panel-default">
-							<div class="panel-heading">
-								<h3 class="panel-title">Streams <i id="update-streams" class="fa fa-refresh" title="Update list of streams" style="cursor: pointer;"></i></h3>
-							</div>
-							<div class="panel-body" id="list">
-								<div class="btn-group btn-group-sm">
-									<button class="btn btn-primary" autocomplete="off" id="watch">Watch or Listen</button>
-									<div class="btn-group btn-group-sm">
-										<button autocomplete="off" id="streamset" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-											Streams list<span class="caret"></span>
-										</button>
-										<ul id="streamslist" class="dropdown-menu" role="menu">
-										</ul>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="row hide" id="info">
-						<div class="panel panel-default">
-							<div class="panel-heading">
-								<h3 class="panel-title"><i class="fa fa-info-circle"></i> Metadata</h3>
-							</div>
-							<div class="panel-body">
-								<pre id="metadata" style="word-break: break-word;"></pre>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-6">
-					<div class="panel panel-default">
-						<div class="panel-heading">
-							<h3 class="panel-title">Stream
-								<span class="label label-info hide" id="status"></span>
-								<span class="label label-primary hide" id="curres"></span>
-								<span class="label label-info hide" id="curbitrate"></span>
-							</h3>
-						</div>
-						<div class="panel-body" id="stream"></div>
-					</div>
-				</div>
-			</div>
-            <div class="input-group margin-bottom-sm">
-                <span class="input-group-addon"><i class="fa fa-cloud-upload fa-fw"></i></span>
-                <input class="form-control" type="text" placeholder="Write a DataChannel message" autocomplete="off" id="datasend" disabled />
-            </div>
-		</div>
-	</div>
-
-	<hr>
-	<div class="footer">
-	</div>
+<div class="video" id="stream-container">
 </div>
 
 </body>

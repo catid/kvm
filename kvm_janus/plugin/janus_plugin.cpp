@@ -9,6 +9,8 @@
 
 #include <mutex>
 #include <vector>
+#include <sstream>
+
 #include "kvm_pipeline.hpp"
 #include "kvm_logger.hpp"
 using namespace kvm;
@@ -195,6 +197,12 @@ static void background_handle_message(janus_plugin_session *handle, const std::s
             post_error(handle, transaction, 10, "video source not ready");
             return;
         }
+
+        std::ostringstream oss;
+        oss << "m=application 1 UDP/DTLS/SCTP webrtc-datachannel\r\n";
+        oss << "c=IN IP4 1.1.1.1\r\n";
+        oss << "a=sctp-port:5000\r\n";
+        sdp += oss.str();
 
         Logger.Info("SDP: ", sdp);
 
