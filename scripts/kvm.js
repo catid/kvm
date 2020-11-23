@@ -164,6 +164,7 @@ $(document).ready(function() {
             }
 
             janus = new Janus({
+                longPollTimeout: 0,
                 server: server,
                 success: function() {
                     attachStream();
