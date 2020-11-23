@@ -427,7 +427,7 @@ std::string RtpPayloader::GenerateSDP() const
     oss << "a=rtcp-fb:96 nack pli\r\n";
     oss << "a=rtcp-fb:96 goog-remb\r\n";
     oss << "a=sendonly\r\n";
-    oss << "a=extmap:1 urn:ietf:params:rtp-hdrext:sdes:mid";
+    //oss << "a=extmap:1 urn:ietf:params:rtp-hdrext:sdes:mid";
     return oss.str();
 }
 
