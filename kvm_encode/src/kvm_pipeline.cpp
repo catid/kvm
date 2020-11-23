@@ -179,9 +179,9 @@ void VideoPipeline::Start()
     AppNode.Initialize("App");
 
     MmalEncoderSettings settings;
-    settings.Kbps = 7000;
+    settings.Kbps = 5000;
     settings.Framerate = 30;
-    settings.GopSize = 12;
+    settings.GopSize = 60;
     Encoder.SetSettings(settings);
 
     bool capture_okay = Capture.Initialize([this](const std::shared_ptr<CameraFrame>& buffer)
@@ -214,6 +214,10 @@ void VideoPipeline::Start()
                 if (!data) {
                     Logger.Error("Encoder.Encode failed");
                     ErrorState = true;
+                    return;
+                }
+                if (bytes == 0) {
+                    // No image in frame
                     return;
                 }
                 Decoder.Release(frame);
@@ -306,6 +310,12 @@ void PiplineStatistics::AddVideo(int bytes)
     std::lock_guard<std::mutex> locker(Lock);
     VideoBytes += bytes;
     VideoCount++;
+    if (MaxVideoBytes == 0 || bytes > MaxVideoBytes) {
+        MaxVideoBytes = bytes;
+    }
+    if (MinVideoBytes == 0 || bytes < MinVideoBytes) {
+        MinVideoBytes = bytes;
+    }
 }
 
 void PiplineStatistics::OnOutputFrame()
@@ -351,6 +361,9 @@ void PiplineStatistics::TryReport()
         VideoBytes = 0;
         VideoCount = 0;
 
+        MaxVideoBytes = 0;
+        MinVideoBytes = 0;
+
         LastReportUsec = now_usec;
     }
 }
@@ -371,7 +384,7 @@ void PiplineStatistics::Report()
     }
 
     Logger.Info("Statistics: ", InputCount, " input frames [", avg_input, " KB (avg)], ",
-        VideoCount, " video frames [", avg_video, " KB (avg)], compression ratio = ", ratio, ":1");
+        VideoCount, " video frames [avg=", avg_video, " min=", MinVideoBytes/1000.f, " max=", MaxVideoBytes/1000.f, " KB], compression ratio = ", ratio, ":1");
 }
 
 

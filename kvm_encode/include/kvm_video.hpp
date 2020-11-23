@@ -106,7 +106,7 @@ class RtpPayloader
 {
 public:
     // Maximum size of datagrams produced by RTP payloader
-    static const int kDatagramBytes = 1300;
+    static const int kDatagramBytes = 1200;
 
     RtpPayloader();
 

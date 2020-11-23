@@ -126,8 +126,13 @@ Janus.useDefaultDependencies = function (deps) {
 			if(options.timeout) {
 				var timeout = new p(function(resolve, reject) {
 					var timerId = setTimeout(function() {
-						clearTimeout(timerId);
-						return reject({message: 'Request timed out', timeout: options.timeout});
+                        clearTimeout(timerId);
+                        var r = null;
+                        try {
+                            r = reject({message: 'Request timed out', timeout: options.timeout});
+                        } catch (e) {
+                        }
+						return r;
 					}, options.timeout);
 				});
 				fetching = p.race([fetching, timeout]);

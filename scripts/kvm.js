@@ -8,7 +8,24 @@ if(window.location.protocol === 'http:') {
 var janus = null;
 var handle = null;
 var opaqueId = "oid-"+Janus.randomString(12);
+var bitrateTimer = null;
 
+
+function stopBitrateTimer() {
+    if (bitrateTimer) {
+        clearInterval(bitrateTimer);
+    }
+    bitrateTimer = null;
+}
+
+function startBitrateTimer() {
+    stopBitrateTimer();
+    bitrateTimer = setInterval(function() {
+        var bitrate = handle.getBitrate();
+        $('#bitrate-text').text(bitrate);
+        $('#resolution-text').text($("#remotevideo").get(0).videoWidth + "x" + $("#remotevideo").get(0).videoHeight);
+    }, 1000);
+}
 
 function watchStream() {
     console.log("watchStream");
@@ -23,6 +40,7 @@ function startStream(jsep) {
 }
 
 function stopStream() {
+    stopBitrateTimer();
     console.log("stopStream");
     var body = { request: "stop" };
     handle.send({ message: body });
@@ -55,10 +73,13 @@ function attachStream() {
                 if(result["status"]) {
                     var status = result["status"];
                     if(status === 'starting') {
+                        $("#status-text").text("starting");
                     }
                     else if(status === 'started') {
+                        $("#status-text").text("started");
                     }
                     else if(status === 'stopped') {
+                        $("#status-text").text("stopped");
                         stopStream();
                     }
                 }
@@ -116,8 +137,8 @@ function attachStream() {
         },
         onremotestream: function(stream) {
             Janus.debug(" ::: Got a remote stream :::", stream);
-            $('#stream-container').append('<video class="rounded centered hide" id="remotevideo" width="100%" height="100%" autoplay playsinline/>');
             Janus.attachMediaStream($('#remotevideo').get(0), stream);
+            startBitrateTimer();
         },
         ondataopen: function(data) {
             Janus.log("The DataChannel is available!");
@@ -127,6 +148,7 @@ function attachStream() {
         },
         oncleanup: function() {
             Janus.log(" ::: Got a cleanup notification :::");
+            stopBitrateTimer();
         }
     });
 }

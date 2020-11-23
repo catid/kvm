@@ -101,6 +101,9 @@ private:
     int VideoBytes = 0;
     int VideoCount = 0;
 
+    int MaxVideoBytes = 0;
+    int MinVideoBytes = 0;
+
     uint64_t LastOutputFrameUsec = 0;
     uint64_t LastOutputReportUsec = 0;
 
@@ -155,6 +158,8 @@ protected:
     std::shared_ptr<std::thread> Thread;
 
     PiplineStatistics Stats;
+
+    uint64_t LastEncoderOutputUsec = 0;
 
     void Start();
     void Stop();

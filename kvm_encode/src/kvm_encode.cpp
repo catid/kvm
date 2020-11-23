@@ -102,8 +102,10 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding)
     PortIn->format->es->video.crop.width = width;
     PortIn->format->es->video.crop.height = height;
     PortIn->format->flags = MMAL_ES_FORMAT_FLAG_FRAMED;
-    PortIn->buffer_size = PortIn->buffer_size_recommended;
+    PortIn->buffer_size = 1000 * 1000; // 1 MB
     PortIn->buffer_num = PortIn->buffer_num_recommended * 4;
+
+    Logger.Info("Buffer size: ", PortIn->buffer_size, " bytes");
 
     r = mmal_port_format_commit(PortIn);
     if (r != MMAL_SUCCESS) {
@@ -286,6 +288,29 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding)
         return false;
     }
 #endif
+
+    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_MIN_QUANT, 1);
+    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_MAX_QUANT, 1);
+    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_INITIAL_QUANT, 1);
+    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_QP_P, 1);
+    //fail |= mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_RC_SLICE_DQUANT, 1);
+
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_MIN_QUANT, 20);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_ENCODE_MIN_QUANT failed: ", mmalErrStr(r));
+        return false;
+    }
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_MAX_QUANT, 34);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_ENCODE_MAX_QUANT failed: ", mmalErrStr(r));
+        return false;
+    }
+
+    r = mmal_port_parameter_set_uint32(PortOut, MMAL_PARAMETER_VIDEO_ENCODE_FRAME_LIMIT_BITS, 1000000);
+    if (r != MMAL_SUCCESS) {
+        Logger.Error("mmal_port_parameter_set_uint32 PortOut MMAL_PARAMETER_VIDEO_ENCODE_FRAME_LIMIT_BITS failed: ", mmalErrStr(r));
+        return false;
+    }
 
 #if 0 // Attic:
     // Not sure what this is

@@ -12,8 +12,19 @@
 </head>
 <body>
 
-<div class="video" id="stream-container">
+<div id="status-container">
+    Status: <span class="status" id="status-text"></span>
 </div>
+
+<div id="resolution-container">
+    Resolution: <span class="resolution" id="resolution-text"></span>
+</div>
+
+<div id="bitrate-container">
+    Bitrate: <span class="bitrate" id="bitrate-text"></span>
+</div>
+
+<video class="rounded centered hide" id="remotevideo" autoplay playsinline/>
 
 </body>
 </html>
