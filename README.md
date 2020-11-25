@@ -26,7 +26,9 @@ sudo mkdosfs ~/usbdisk.img
 echo "dtoverlay=dwc2,dr_mode=peripheral" | sudo tee -a /boot/config.txt
 echo "dwc2" | sudo tee -a /etc/modules
 echo "libcomposite" | sudo tee -a /etc/modules
+```
 
+```
 # Create multi-function widget
 sudo mkdir -p /sys/kernel/config/usb_gadget/kvm
 echo "0x1d6b" | sudo tee -a /sys/kernel/config/usb_gadget/kvm/idVendor
