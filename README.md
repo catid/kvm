@@ -26,7 +26,19 @@ sudo mkdosfs ~/usbdisk.img
 echo "dtoverlay=dwc2,dr_mode=peripheral" | sudo tee -a /boot/config.txt
 echo "dwc2" | sudo tee -a /etc/modules
 echo "libcomposite" | sudo tee -a /etc/modules
+echo "g_hid" | sudo tee -a /etc/modules
 ```
+
+```
+crontab -e
+```
+
+Add:
+
+```
+@reboot /home/pi/kvm/scripts/setup_gadget.sh
+```
+
 
 ```
 # Create multi-function widget
