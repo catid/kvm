@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.9)
 project(kvm LANGUAGES CXX)
 
 
@@ -27,9 +27,10 @@ endif()
 # In debug mode, add -DDEBUG
 add_compile_options("$<$<CONFIG:DEBUG>:-DDEBUG>")
 
-# Extra warnings
+# Default flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 
+# Release/Debug specific flags
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fstack-protector")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 

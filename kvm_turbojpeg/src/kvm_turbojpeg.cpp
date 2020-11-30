@@ -3,6 +3,7 @@
 #include "kvm_turbojpeg.hpp"
 #include "kvm_logger.hpp"
 
+#include <omp.h>
 #include <arm_neon.h>
 
 namespace kvm {
@@ -33,15 +34,23 @@ static void ConvertYuv422toYuv420(const uint8_t* src, uint8_t* dest, int w, int 
     const uint8_t* src1 = src + dest_width;
 
     for (int y = 0; y < dest_height; ++y) {
-#if 1 // Reference version:
-        for (int x = 0; x < dest_width; ++x) {
-            dest[x] = static_cast<uint8_t>( ((unsigned)src[x] + (unsigned)src1[x] + 1) >> 1 );
-        }
-#else // ARM NEON optimized version:
         // Note: Assumes MMAL padded inputs (16 bytes)
+#ifdef __ARM_NEON__ // ARM NEON optimized version:
+        // Note: Raspbian is a 32-bit OS with 32-bit tools and cannot use ARM NEON by default
         for (int x = 0; x < dest_width; x += 16) {
-            vst1_u8(dest + x, vshrn_n_u16(vaddl_u8(v1s1_u8(src + x), v1s1_u8(src1 + x)), 1));
-            vst1_u8(dest + x + 8, vshrn_n_u16(vaddl_u8(v1s1_u8(src + x + 8), v1s1_u8(src1 + x + 8)), 1));
+            vst1_u8(dest + x, vshrn_n_u16(vaddl_u8(vld1_u8(src + x), vld1_u8(src1 + x)), 1));
+            vst1_u8(dest + x + 8, vshrn_n_u16(vaddl_u8(vld1_u8(src + x + 8), vld1_u8(src1 + x + 8)), 1));
+        }
+#else // Reference version:
+        for (int x = 0; x < dest_width; x += 8) {
+            dest[x] = static_cast<uint8_t>( ((unsigned)src[x] + (unsigned)src1[x] + 1) >> 1 );
+            dest[x+1] = static_cast<uint8_t>( ((unsigned)src[x+1] + (unsigned)src1[x+1] + 1) >> 1 );
+            dest[x+2] = static_cast<uint8_t>( ((unsigned)src[x+2] + (unsigned)src1[x+2] + 1) >> 1 );
+            dest[x+3] = static_cast<uint8_t>( ((unsigned)src[x+3] + (unsigned)src1[x+3] + 1) >> 1 );
+            dest[x+4] = static_cast<uint8_t>( ((unsigned)src[x+4] + (unsigned)src1[x+4] + 1) >> 1 );
+            dest[x+5] = static_cast<uint8_t>( ((unsigned)src[x+5] + (unsigned)src1[x+5] + 1) >> 1 );
+            dest[x+6] = static_cast<uint8_t>( ((unsigned)src[x+6] + (unsigned)src1[x+6] + 1) >> 1 );
+            dest[x+7] = static_cast<uint8_t>( ((unsigned)src[x+7] + (unsigned)src1[x+7] + 1) >> 1 );
         }
 #endif
 
@@ -152,8 +161,12 @@ std::shared_ptr<Frame> TurboJpegDecoder::Decompress(const uint8_t* data, int byt
     }
 
     if (subsamp == TJSAMP_422) {
-        ConvertYuv422toYuv420(Yuv422TempFrame->Planes[1], frame->Planes[1], w, h);
-        ConvertYuv422toYuv420(Yuv422TempFrame->Planes[2], frame->Planes[2], w, h);
+        // Note: Seems to require "num_threads(2)" to actually run operations in parallel.
+        // When they run in parallel, this operation takes about 1.5 milliseconds.
+#pragma omp parallel for num_threads(2)
+        for (int i = 1; i <= 2; ++i) {
+            ConvertYuv422toYuv420(Yuv422TempFrame->Planes[i], frame->Planes[i], w, h);
+        }
     }
 
 #else // RGB:

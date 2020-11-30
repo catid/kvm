@@ -30,6 +30,13 @@ set(SOURCE_FILES
 ################################################################################
 # Targets
 
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    message("OpenMP found")
+else()
+    message("OpenMP NOT found")
+endif()
+
 # kvm_turbojpeg library
 
 add_library(kvm_turbojpeg ${SOURCE_FILES})
@@ -38,6 +45,7 @@ target_link_libraries(kvm_turbojpeg
     PUBLIC
         kvm_core
         ${TJ_LIB}
+        OpenMP::OpenMP_CXX
 )
 install(TARGETS kvm_turbojpeg DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)

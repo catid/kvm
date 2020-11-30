@@ -40,7 +40,7 @@ void PipelineNode::Shutdown()
 void PipelineNode::Queue(std::function<void()> func)
 {
     std::unique_lock<std::mutex> locker(Lock);
-    if (QueuePublic.size() >= MaxQueueDepth) {
+    if ((int)QueuePublic.size() >= MaxQueueDepth) {
         Logger.Error(Name, ": Fell too far behind. Dropping incoming frame!");
         return;
     }
