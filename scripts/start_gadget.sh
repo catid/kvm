@@ -136,8 +136,8 @@ CONFIGS_STRINGS_DIR="${CONFIGS_DIR}/strings/0x409"
 mkdir -p "$CONFIGS_STRINGS_DIR"
 echo "Config ${CONFIG_INDEX}: ECM network" > "${CONFIGS_STRINGS_DIR}/configuration"
 
-ln -s "$KEYBOARD_FUNCTIONS_DIR" "${CONFIGS_DIR}/"
-ln -s "$MOUSE_FUNCTIONS_DIR" "${CONFIGS_DIR}/"
+ln -s -f "$KEYBOARD_FUNCTIONS_DIR" "${CONFIGS_DIR}/"
+ln -s -f "$MOUSE_FUNCTIONS_DIR" "${CONFIGS_DIR}/"
 ls /sys/class/udc > UDC
 
 chmod 777 /dev/hidg0

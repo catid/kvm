@@ -17,10 +17,22 @@ if [ "$EUID" -ne 0 ];
 fi
 
 echo "Installing /boot/config.txt change: Enables firmware for dwc2 to get loaded"
-echo "dtoverlay=dwc2" >> /boot/config.txt
+
+if grep -Fxq "dtoverlay=dwc2" /boot/config.txt
+then
+    echo "Already installed (skipped)."
+else
+    echo "dtoverlay=dwc2" >> /boot/config.txt
+fi
 
 echo "Installing /etc/modules change: Enables dwc2 module on boot"
-echo "dwc2" >> /etc/modules
+
+if grep -Fxq "dwc2" /etc/modules
+then
+    echo "Already installed (skipped)."
+else
+    echo "dwc2" >> /etc/modules
+fi
 
 echo "Installing kvm_gadget, kvm_https, kvm_webrtc systemd services"
 cp kvm_gadget.service /etc/systemd/system/

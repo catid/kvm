@@ -1,7 +1,7 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import ssl
 
-httpd = HTTPServer(('localhost', 80), BaseHTTPRequestHandler)
+httpd = HTTPServer(('', 80), BaseHTTPRequestHandler)
 
 httpd.socket = ssl.wrap_socket (httpd.socket, 
         keyfile="/home/pi/kvm/scripts/key.pem", 
