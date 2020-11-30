@@ -13,9 +13,6 @@ echo "dtoverlay=dwc2" >> /boot/config.txt
 echo "Installing /etc/modules change: Enables dwc2 module on boot"
 echo "dwc2" >> /etc/modules
 
-echo "Generating HTTPS key"
-openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365
-
 echo "Installing kvm_gadget, kvm_https, kvm_webrtc systemd services"
 cp kvm_gadget.service /etc/systemd/system/
 cp kvm_https.service /etc/systemd/system/

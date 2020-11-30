@@ -1,11 +1,17 @@
 [Unit]
-Description=HTTPS server
+Description=HTTPS Server
 DefaultDependencies=true
+StartLimitBurst=1000
+StartLimitIntervalSec=10
 
 [Service]
 Type=simple
-ExecStart=python3 /home/pi/kvm/scripts/start_https.py
-WordkingDirectory=/home/pi/kvm/scripts/
+ExecStart=/home/pi/kvm/scripts/start_https.sh
+WorkingDirectory=/home/pi/kvm/scripts/
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+RestartSec=1s
 
 [Install]
 WantedBy=local-fs.target
