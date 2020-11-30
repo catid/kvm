@@ -1,0 +1,11 @@
+[Unit]
+Description=WebRTC server
+DefaultDependencies=true
+
+[Service]
+Type=simple
+ExecStart=/home/pi/kvm/scripts/start_webrtc.sh
+WordkingDirectory=/home/pi/kvm/scripts/
+
+[Install]
+WantedBy=local-fs.target

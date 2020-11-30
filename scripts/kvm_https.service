@@ -1,0 +1,11 @@
+[Unit]
+Description=HTTPS server
+DefaultDependencies=true
+
+[Service]
+Type=simple
+ExecStart=python3 /home/pi/kvm/scripts/start_https.py
+WordkingDirectory=/home/pi/kvm/scripts/
+
+[Install]
+WantedBy=local-fs.target

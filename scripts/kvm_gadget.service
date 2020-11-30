@@ -1,0 +1,11 @@
+[Unit]
+Description=Input emulation
+DefaultDependencies=true
+
+[Service]
+Type=simple
+ExecStart=/home/pi/kvm/scripts/start_gadget.sh
+WordkingDirectory=/home/pi/kvm/scripts/
+
+[Install]
+WantedBy=local-fs.target
