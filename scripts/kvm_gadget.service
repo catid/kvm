@@ -1,8 +1,6 @@
 [Unit]
 Description=Input Emulation
 DefaultDependencies=true
-StartLimitBurst=1000
-StartLimitIntervalSec=10
 
 [Service]
 Type=simple
@@ -10,8 +8,6 @@ ExecStart=/home/pi/kvm/scripts/start_gadget.sh
 WorkingDirectory=/home/pi/kvm/scripts/
 StandardOutput=syslog
 StandardError=syslog
-Restart=always
-RestartSec=1s
 
 [Install]
 WantedBy=local-fs.target
