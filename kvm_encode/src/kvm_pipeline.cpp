@@ -240,15 +240,17 @@ void VideoPipeline::Start()
                 }
 
                 if (Parser.Pictures.size() > 1) {
-                    Logger.Warn("Video output includes more than one picture");
+                    Logger.Warn("Video output includes ", Parser.Pictures.size(), " pictures");
                 }
 
-                VideoParameters = std::make_shared<std::vector<uint8_t>>(Parser.TotalParameterBytes);
+                if (!Parser.Parameters.empty()) {
+                    VideoParameters = std::make_shared<std::vector<uint8_t>>(Parser.TotalParameterBytes);
 
-                uint8_t* dest = VideoParameters->data();
-                for (auto& range : Parser.Parameters) {
-                    memcpy(dest, range.Ptr, range.Bytes);
-                    dest += range.Bytes;
+                    uint8_t* dest = VideoParameters->data();
+                    for (auto& range : Parser.Parameters) {
+                        memcpy(dest, range.Ptr, range.Bytes);
+                        dest += range.Bytes;
+                    }
                 }
 
                 for (auto& picture : Parser.Pictures)
@@ -290,14 +292,25 @@ void VideoPipeline::Start()
 
 void VideoPipeline::Stop()
 {
+    Logger.Info("Stopping capture...");
     Capture.Stop();
 
+    Logger.Info("Stopping encoder...");
     Encoder.Shutdown();
+
+    Logger.Info("Capture shutdown...");
     Capture.Shutdown();
 
+    Logger.Info("DecoderNode shutdown...");
     DecoderNode.Shutdown();
+
+    Logger.Info("EncoderNode shutdown...");
     EncoderNode.Shutdown();
+
+    Logger.Info("AppNode shutdown...");
     AppNode.Shutdown();
+
+    Logger.Info("Video pipeline stopped");
 }
 
 

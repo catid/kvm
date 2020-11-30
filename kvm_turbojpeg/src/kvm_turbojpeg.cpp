@@ -22,26 +22,34 @@ static logger::Channel Logger("Capture");
     This can be done two ways:
     (1) Discard every other row (fast)
     (2) Blend consecutive rows together (not much slower, avoids missing colors)
+
+    We do option (2) and use ARM NEON to speed up the calculation.
 */
 static void ConvertYuv422toYuv420(const uint8_t* src, uint8_t* dest, int w, int h)
 {
-#if 1 // Reference version
     const int dest_height = h / 2;
     const int dest_width = w / 2;
 
     const uint8_t* src1 = src + dest_width;
 
     for (int y = 0; y < dest_height; ++y) {
+#if 1 // Reference version:
         for (int x = 0; x < dest_width; ++x) {
             dest[x] = static_cast<uint8_t>( ((unsigned)src[x] + (unsigned)src1[x] + 1) >> 1 );
         }
+#else // ARM NEON optimized version:
+        // Note: Assumes MMAL padded inputs (16 bytes)
+        for (int x = 0; x < dest_width; x += 16) {
+            vst1_u8(dest + x, vshrn_n_u16(vaddl_u8(v1s1_u8(src + x), v1s1_u8(src1 + x)), 1));
+            vst1_u8(dest + x + 8, vshrn_n_u16(vaddl_u8(v1s1_u8(src + x + 8), v1s1_u8(src1 + x + 8)), 1));
+        }
+#endif
 
         // TBD: Assumes width = stride
         dest += dest_width;
         src += dest_width * 2;
         src1 += dest_width * 2;
     }
-#endif
 }
 
 
@@ -75,7 +83,16 @@ std::shared_ptr<Frame> TurboJpegDecoder::Decompress(const uint8_t* data, int byt
         return nullptr;
     }
 
-#if 0 // Faster but more complex:
+    /*
+        Benchmark results on a selected desktop image:
+
+        YUV422 + Conversion to YUV420: 16.5 milliseconds (avg)
+        YUV420 Video Encode: 24 milliseconds (avg)
+
+        TurboJPEG Conversion to RGB: 17.5 milliseconds
+        RGB Video Encode: 28.5 milliseconds (avg)
+    */
+#if 1 // Faster but more complex:
 
     PixelFormat format;
     if (subsamp == TJSAMP_420) {

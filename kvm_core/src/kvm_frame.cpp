@@ -38,6 +38,10 @@ static int RoundUp16(int x)
 
 std::shared_ptr<Frame> FramePool::Allocate(int w, int h, PixelFormat format)
 {
+    // Designed for ingest into MMAL encoder
+    w = RoundUp32(w);
+    h = RoundUp16(h);
+
     // Check if we can use one from the pool:
     {
         std::lock_guard<std::mutex> locker(Lock);
@@ -49,15 +53,12 @@ std::shared_ptr<Frame> FramePool::Allocate(int w, int h, PixelFormat format)
     }
 
     auto frame = std::make_shared<Frame>();
-
-    // Designed for ingest into MMAL encoder
-    // TBD: Should these be byte alignments instead of resolution?
-    frame->Width = RoundUp32(w);
-    frame->Height = RoundUp16(h);
+    frame->Width = w;
+    frame->Height = h;
     frame->Format = format;
 
     if (format == PixelFormat::RGB24) {
-        uint8_t* data = AlignedAllocate(frame->Width * frame->Height * 3);
+        uint8_t* data = AlignedAllocate(w * h * 3);
         if (!data) {
             Logger.Error("Out of memory: Unable to allocate more raw frames");
             return nullptr;

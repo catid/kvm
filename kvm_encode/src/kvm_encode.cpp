@@ -414,7 +414,7 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_key
         } else if (frame->Format == PixelFormat::RGB24) {
             input_encoding = MMAL_ENCODING_RGB24;
         } else {
-            // Note: YUV422 is not supported (tested)
+            // Note: YUV422 is not supported by this hardware (Tested!)
             Logger.Error("Unsupported format");
             return nullptr;
         }
