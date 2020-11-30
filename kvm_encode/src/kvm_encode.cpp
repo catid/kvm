@@ -386,6 +386,16 @@ bool MmalEncoder::Initialize(int width, int height, int input_encoding)
 void MmalEncoder::Shutdown()
 {
     if (Encoder) {
+        // Disable the port so we do not hang on shutdown
+        int r = mmal_wrapper_port_disable(PortIn);
+        if (r != MMAL_SUCCESS) {
+            Logger.Warn("mmal_wrapper_port_disable PortIn failed: ", mmalErrStr(r));
+        }
+        r = mmal_wrapper_port_disable(PortOut);
+        if (r != MMAL_SUCCESS) {
+            Logger.Warn("mmal_wrapper_port_disable PortOut failed: ", mmalErrStr(r));
+        }
+
         mmal_wrapper_destroy(Encoder);
         Encoder = nullptr;
     }
@@ -395,9 +405,7 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_key
 {
     if (!Encoder) {
         int input_encoding = 0;
-        if (frame->Format == PixelFormat::YUV422P) {
-            input_encoding = MMAL_ENCODING_I422;
-        } else if (frame->Format == PixelFormat::YUV420P) {
+        if (frame->Format == PixelFormat::YUV420P) {
             input_encoding = MMAL_ENCODING_I420;
         } else if (frame->Format == PixelFormat::YUYV) {
             input_encoding = MMAL_ENCODING_YUYV;
@@ -406,6 +414,7 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_key
         } else if (frame->Format == PixelFormat::RGB24) {
             input_encoding = MMAL_ENCODING_RGB24;
         } else {
+            // Note: YUV422 is not supported (tested)
             Logger.Error("Unsupported format");
             return nullptr;
         }
@@ -420,7 +429,6 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_key
     int r;
 
     if (force_keyframe) {
-        // Do not force I-frame
         r = mmal_port_parameter_set_boolean(PortOut, MMAL_PARAMETER_VIDEO_REQUEST_I_FRAME, MMAL_TRUE);
         if (r != MMAL_SUCCESS) {
             Logger.Error("mmal_port_parameter_set_boolean PortOut MMAL_PARAMETER_VIDEO_REQUEST_I_FRAME failed: ", mmalErrStr(r));
@@ -446,15 +454,13 @@ uint8_t* MmalEncoder::Encode(const std::shared_ptr<Frame>& frame, bool force_key
         MMAL_BUFFER_HEADER_T* in = nullptr;
         if (!sent && mmal_wrapper_buffer_get_empty(PortIn, &in, 0) == MMAL_SUCCESS) {
             in->data = frame->Planes[0];
-            if (frame->Format == PixelFormat::YUV422P) {
-                in->length = in->alloc_size = Width * Height * 2;
-            } else if (frame->Format == PixelFormat::YUV420P) {
+            if (frame->Format == PixelFormat::YUV420P) {
                 in->length = in->alloc_size = Width * Height * 3 / 2;
             } else if (frame->Format == PixelFormat::RGB24) {
                 in->length = in->alloc_size = Width * Height * 3;
             }
             in->offset = 0;
-            in->flags = MMAL_BUFFER_HEADER_FLAG_EOS;
+            in->flags = MMAL_BUFFER_HEADER_FLAG_EOS; // Required
             r = mmal_port_send_buffer(PortIn, in);
             if (r != MMAL_SUCCESS) {
                 Logger.Error("mmal_port_send_buffer PortIn failed: ", mmalErrStr(r));

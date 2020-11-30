@@ -46,7 +46,7 @@ int plugin_init(janus_callbacks *callback, const char *config_path)
 {
     m_Callbacks = callback;
 
-    m_WorkerNode.Initialize("JanusWorker");
+    m_WorkerNode.Initialize("JanusWorker", 4/*max queue depth*/);
 
     m_Pipeline.Initialize([&](
         uint64_t frame_number,

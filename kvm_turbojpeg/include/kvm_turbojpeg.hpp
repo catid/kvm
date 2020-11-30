@@ -36,6 +36,8 @@ protected:
     tjhandle Handle = nullptr;
     FramePool Pool;
 
+    std::shared_ptr<Frame> Yuv422TempFrame;
+
     bool Initialize();
 };
 

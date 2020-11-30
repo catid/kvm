@@ -11,9 +11,10 @@ static logger::Channel Logger("Pipeline");
 //------------------------------------------------------------------------------
 // PipelineNode
 
-void PipelineNode::Initialize(const std::string& name)
+void PipelineNode::Initialize(const std::string& name, int max_queue_depth)
 {
     Name = name;
+    MaxQueueDepth = max_queue_depth;
 
     Count = 0;
     TotalUsec = 0;
@@ -39,6 +40,10 @@ void PipelineNode::Shutdown()
 void PipelineNode::Queue(std::function<void()> func)
 {
     std::unique_lock<std::mutex> locker(Lock);
+    if (QueuePublic.size() >= MaxQueueDepth) {
+        Logger.Error(Name, ": Fell too far behind. Dropping incoming frame!");
+        return;
+    }
     QueuePublic.push_back(func);
     Condition.notify_all();
 }
@@ -174,9 +179,10 @@ void VideoPipeline::Shutdown()
 
 void VideoPipeline::Start()
 {
-    DecoderNode.Initialize("Decoder");
-    EncoderNode.Initialize("Encoder");
-    AppNode.Initialize("App");
+    const int max_queue_depth = 4;
+    DecoderNode.Initialize("Decoder", max_queue_depth);
+    EncoderNode.Initialize("Encoder", max_queue_depth);
+    AppNode.Initialize("App", max_queue_depth);
 
     MmalEncoderSettings settings;
     settings.Kbps = 5000;
@@ -230,19 +236,19 @@ void VideoPipeline::Start()
 
                 if (Parser.Pictures.empty()) {
                     Logger.Error("Video output does not include a picture");
-                } else if (Parser.Pictures.size() > 1) {
+                    return;
+                }
+
+                if (Parser.Pictures.size() > 1) {
                     Logger.Warn("Video output includes more than one picture");
                 }
 
-                if (!Parser.Parameters.empty())
-                {
-                    VideoParameters = std::make_shared<std::vector<uint8_t>>(Parser.TotalParameterBytes);
+                VideoParameters = std::make_shared<std::vector<uint8_t>>(Parser.TotalParameterBytes);
 
-                    uint8_t* dest = VideoParameters->data();
-                    for (auto& range : Parser.Parameters) {
-                        memcpy(dest, range.Ptr, range.Bytes);
-                        dest += range.Bytes;
-                    }
+                uint8_t* dest = VideoParameters->data();
+                for (auto& range : Parser.Parameters) {
+                    memcpy(dest, range.Ptr, range.Bytes);
+                    dest += range.Bytes;
                 }
 
                 for (auto& picture : Parser.Pictures)
@@ -321,6 +327,9 @@ void PiplineStatistics::AddVideo(int bytes)
 void PiplineStatistics::OnOutputFrame()
 {
     std::lock_guard<std::mutex> locker(Lock);
+    if (LastOutputFrameUsec == 0) {
+        Logger.Info("Success: Got first encoded frame from video pipeline");
+    }
     LastOutputFrameUsec = GetTimeUsec();
 }
 

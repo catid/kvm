@@ -40,7 +40,7 @@ public:
     {
         Shutdown();
     }
-    void Initialize(const std::string& name);
+    void Initialize(const std::string& name, int max_queue_depth);
     void Shutdown();
 
     bool IsTerminated() const
@@ -52,6 +52,7 @@ public:
 
 protected:
     std::string Name;
+    int MaxQueueDepth = 0;
 
     int Count = 0;
     int64_t TotalUsec = 0;
@@ -158,8 +159,6 @@ protected:
     std::shared_ptr<std::thread> Thread;
 
     PiplineStatistics Stats;
-
-    uint64_t LastEncoderOutputUsec = 0;
 
     void Start();
     void Stop();
