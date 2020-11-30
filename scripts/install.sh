@@ -1,8 +1,17 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+# Exit on first error.
+set -e
+
+# Echo commands to stdout.
+set -x
+
+# Treat undefined environment variables as errors.
+set -u
 
 echo "This script installs KVM services on a Raspberry Pi"
 
-if [ "$EUID" -ne 0 ]
+if [ "$EUID" -ne 0 ];
   then echo "Please run as root"
   exit
 fi
