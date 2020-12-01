@@ -1,5 +1,5 @@
 # ![Logo](https://github.com/catid/kvm/raw/master/art/logo_44.png "Logo") SkyJack
-### IoT Crash Cart Adapter
+### IP KVM / IoT Crash Cart Adapter using Raspberry Pi
 
 This software runs on a Raspberry Pi 4 with an HDMI/USB adapter attached.
 
