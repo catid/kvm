@@ -1,9 +1,7 @@
 // Copyright 2020 Christopher A. Taylor
 
 /*
-    Kernel module: g_hid
-
-    https://www.kernel.org/doc/Documentation/usb/gadget_hid.txt
+    FIXME
 */
 
 #pragma once
@@ -15,13 +13,6 @@ namespace kvm {
 
 //------------------------------------------------------------------------------
 // MmalEncoder
-
-struct MmalEncoderSettings
-{
-    int Kbps = 4000; // 4 Mbps
-    int Framerate = 30; // From frame source settings
-    int GopSize = 30; // Interval between keyframes
-};
 
 class MmalEncoder
 {

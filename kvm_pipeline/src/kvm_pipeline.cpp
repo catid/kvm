@@ -186,10 +186,11 @@ void VideoPipeline::Start()
     EncoderNode.Initialize("Encoder", max_queue_depth);
     AppNode.Initialize("App", max_queue_depth);
 
+    // Please see kvm_encode.hpp for comments on these settings
     MmalEncoderSettings settings;
     settings.Kbps = 5000;
     settings.Framerate = 30;
-    settings.GopSize = 60;
+    settings.GopSize = 60; // This affects the keyframe size
     Encoder.SetSettings(settings);
 
     bool capture_okay = Capture.Initialize([this](const std::shared_ptr<CameraFrame>& buffer)

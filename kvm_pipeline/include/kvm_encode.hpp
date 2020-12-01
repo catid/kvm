@@ -30,11 +30,25 @@ namespace kvm {
 //------------------------------------------------------------------------------
 // MmalEncoder
 
+/*
+    Kbps: The overall bitrate used by the stream over 1 second.
+    Framerate: Input framerate in frames per second.
+        We expect the input framerate to be constant.
+    GopSize: Interval between keyframes.
+
+    The GopSize for this encoder also controls the size of the keyframes.
+    GopSize below 60 tends to produce I-frames that are too large to send
+    over Janus WebRTC, as they get to be above 100 KB per frame, and Janus
+    will fail to send some frames if they are larger.
+
+    Larger GopSize causes slightly lower quality and longer load times,
+    as clients need to wait for the next keyframe to join the video stream.
+*/
 struct MmalEncoderSettings
 {
-    int Kbps = 4000; // 4 Mbps
+    int Kbps = 5000; // 4 Mbps
     int Framerate = 30; // From frame source settings
-    int GopSize = 30; // Interval between keyframes
+    int GopSize = 60; // Interval between keyframes
 };
 
 class MmalEncoder

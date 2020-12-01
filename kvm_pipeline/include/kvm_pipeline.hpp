@@ -2,7 +2,7 @@
 
 /*
     Video Pipeline:
-    Camera -> JPEG Decode -> H.264 Encode -> Video Parser
+    HDMI Capture -> JPEG Decode -> H.264 Encode -> Video Parser
 */
 
 #pragma once

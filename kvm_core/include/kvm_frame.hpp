@@ -1,7 +1,7 @@
 // Copyright 2020 Christopher A. Taylor
 
 /*
-    Frame object
+    Memory pool allocator for video frame images in various formats
 */
 
 #pragma once
