@@ -33,3 +33,5 @@
 
 CMakeFiles
 build
+
+*.pem

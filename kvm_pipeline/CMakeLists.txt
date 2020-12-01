@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(kvm_encode LANGUAGES CXX)
+project(kvm_pipeline LANGUAGES CXX)
 
 
 ################################################################################
@@ -22,19 +22,19 @@ set(SOURCE_FILES
 ################################################################################
 # Targets
 
-# kvm_encode library
+# kvm_pipeline library
 
-add_library(kvm_encode ${SOURCE_FILES})
-target_include_directories(kvm_encode
+add_library(kvm_pipeline ${SOURCE_FILES})
+target_include_directories(kvm_pipeline
     PUBLIC
         include
         ${USERLAND_INCLUDE_PATH}
         ${VCSM_INCLUDE_PATH}
 )
-target_link_libraries(kvm_encode
+target_link_libraries(kvm_pipeline
     PUBLIC
         kvm_core
-        kvm_turbojpeg
+        kvm_jpeg
         kvm_capture
         ${MMAL_LIB}
         ${MMAL_CORE_LIB}
@@ -42,14 +42,14 @@ target_link_libraries(kvm_encode
         ${VCOS_LIB}
         ${BCM_HOST_LIB}
 )
-install(TARGETS kvm_encode DESTINATION lib)
+install(TARGETS kvm_pipeline DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)
 
 # kvm_encode_test application
 
 add_executable(kvm_encode_test test/kvm_encode_test.cpp)
 target_link_libraries(kvm_encode_test
-    kvm_encode
+    kvm_pipeline
 )
 install(TARGETS kvm_encode_test DESTINATION bin)
 
@@ -57,6 +57,6 @@ install(TARGETS kvm_encode_test DESTINATION bin)
 
 add_executable(kvm_pipeline_test test/kvm_pipeline_test.cpp)
 target_link_libraries(kvm_pipeline_test
-    kvm_encode
+    kvm_pipeline
 )
 install(TARGETS kvm_pipeline_test DESTINATION bin)

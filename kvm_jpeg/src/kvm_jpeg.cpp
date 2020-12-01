@@ -1,6 +1,6 @@
 // Copyright 2020 Christopher A. Taylor
 
-#include "kvm_turbojpeg.hpp"
+#include "kvm_jpeg.hpp"
 #include "kvm_logger.hpp"
 
 #include <omp.h>
@@ -65,7 +65,7 @@ static void ConvertYuv422toYuv420(const uint8_t* src, uint8_t* dest, int w, int 
 //------------------------------------------------------------------------------
 // Decoder
 
-TurboJpegDecoder::~TurboJpegDecoder()
+JpegDecoder::~JpegDecoder()
 {
     if (Handle) {
         tjDestroy(Handle);
@@ -73,7 +73,7 @@ TurboJpegDecoder::~TurboJpegDecoder()
     }
 }
 
-std::shared_ptr<Frame> TurboJpegDecoder::Decompress(const uint8_t* data, int bytes)
+std::shared_ptr<Frame> JpegDecoder::Decompress(const uint8_t* data, int bytes)
 {
     if (!Initialize()) {
         return nullptr;
@@ -197,7 +197,7 @@ std::shared_ptr<Frame> TurboJpegDecoder::Decompress(const uint8_t* data, int byt
     return frame;
 }
 
-bool TurboJpegDecoder::Initialize()
+bool JpegDecoder::Initialize()
 {
     if (Handle) {
         return true;

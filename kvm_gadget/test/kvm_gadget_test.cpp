@@ -1,6 +1,6 @@
 // Copyright 2020 Christopher A. Taylor
 
-#include "kvm_turbojpeg.hpp"
+#include "kvm_jpeg.hpp"
 #include "kvm_capture.hpp"
 #include "kvm_encode.hpp"
 #include "kvm_logger.hpp"
@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     Logger.Info("kvm_encode_test");
 
     V4L2Capture capture;
-    TurboJpegDecoder decoder;
+    JpegDecoder decoder;
     MmalEncoder encoder;
 
     MmalEncoderSettings settings;

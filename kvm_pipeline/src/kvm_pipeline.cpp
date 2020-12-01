@@ -50,6 +50,8 @@ void PipelineNode::Queue(std::function<void()> func)
 
 void PipelineNode::Loop()
 {
+    SetCurrentThreadName(Name.c_str());
+
     while (!Terminated)
     {
         {

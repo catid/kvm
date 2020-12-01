@@ -1,10 +1,10 @@
 // Copyright 2020 Christopher A. Taylor
 
 /*
-    C++ Wrapper around turbojpeg
+    C++ Wrapper around turbojpeg and the brcmjpeg hw decoder
 
-    Reference:
-    https://github.com/libjpeg-turbo/libjpeg-turbo/blob/master/turbojpeg.h
+    References:
+    [1] https://github.com/libjpeg-turbo/libjpeg-turbo/blob/master/turbojpeg.h
 */
 
 #pragma once
@@ -18,12 +18,12 @@ namespace kvm {
 
 
 //------------------------------------------------------------------------------
-// Decoder
+// JpegDecoder
 
-class TurboJpegDecoder
+class JpegDecoder
 {
 public:
-    ~TurboJpegDecoder();
+    ~JpegDecoder();
 
     std::shared_ptr<Frame> Decompress(const uint8_t* data, int bytes);
 

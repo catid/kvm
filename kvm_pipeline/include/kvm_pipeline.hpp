@@ -9,7 +9,7 @@
 
 #include "kvm_core.hpp"
 #include "kvm_capture.hpp"
-#include "kvm_turbojpeg.hpp"
+#include "kvm_jpeg.hpp"
 #include "kvm_encode.hpp"
 #include "kvm_video.hpp"
 
@@ -19,15 +19,6 @@
 #include <condition_variable>
 
 namespace kvm {
-
-
-//------------------------------------------------------------------------------
-// ParsedVideo
-
-struct ParsedVideo
-{
-    std::vector<uint8_t> Data;
-};
 
 
 //------------------------------------------------------------------------------
@@ -143,7 +134,7 @@ protected:
     uint64_t LastFrameNumber = 0;
 
     PipelineNode DecoderNode;
-    TurboJpegDecoder Decoder;
+    JpegDecoder Decoder;
 
     PipelineNode EncoderNode;
     MmalEncoder Encoder;

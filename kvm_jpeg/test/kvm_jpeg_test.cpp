@@ -1,6 +1,6 @@
 // Copyright 2020 Christopher A. Taylor
 
-#include "kvm_turbojpeg.hpp"
+#include "kvm_jpeg.hpp"
 #include "kvm_capture.hpp"
 #include "kvm_logger.hpp"
 using namespace kvm;
@@ -22,11 +22,11 @@ int main(int argc, char* argv[])
     CORE_UNUSED(argc);
     CORE_UNUSED(argv);
 
-    Logger.Info("kvm_turbojpeg_test");
+    Logger.Info("kvm_jpeg_test");
 
     V4L2Capture capture;
 
-    TurboJpegDecoder decoder;
+    JpegDecoder decoder;
 
     if (!capture.Initialize([&](const std::shared_ptr<CameraFrame>& buffer) {
         Logger.Info("Got frame #", buffer->FrameNumber, " bytes = ", buffer->ImageBytes);
