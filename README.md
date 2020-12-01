@@ -8,10 +8,7 @@ The USB-C port is configured so that the Pi acts as a keyboard/mouse emulator.
 
 By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target device remotely, as if you were sitting at the computer with a keyboard and mouse attached to it.  You will be able to access the BIOS and boot menus of the device remotely.
 
-
-## Features
-
-Project features:
+Features:
 
 * The browser displays video from the target device.
 * Keystrokes and mouse movements are relayed to the target device.
@@ -39,17 +36,6 @@ The TinyPilot project has built a power/data splitter that is super useful when 
 
 * Power/Data Splitter: https://tinypilotkvm.com/product/tinypilot-power-connector
 * 2x Micro USB to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01JPDTZXK
-
-
-## Hardware Setup
-
-You will need a WiFi network, a laptop/desktop computer, and a target device with USB-A and HDMI ports.
-
-Follow the included paper instructions to place the Raspberry Pi inside the protective case.
-
-Insert the HDMI/USB Capture Card into one of the two Blue Middle USB3 ports on the Raspberry Pi 4.
-
-Insert the USB-C to USB-A Adapter Cable into the USB-C port on the Raspberry Pi 4.
 
 
 ## OS Installation
@@ -110,6 +96,19 @@ Now to install the KVM software run:
 cd /home/pi/kvm/scripts/
 sudo ./install.sh
 ```
+
+Reboot the Raspberry Pi.
+
+Navigate to https://raspberrypi.local/ to access the KVM.
+
+
+## Hardware Setup
+
+Insert the HDMI/USB Capture Card into one of the two Blue Middle USB3 ports on the Raspberry Pi 4.  Connect the HDMI cable to the target device.
+
+Insert the USB-C to USB-A Adapter Cable into the USB-C port on the Raspberry Pi 4.  Connect the USB-A cable to the target device.
+
+Power on the target device.
 
 
 ## Credits
