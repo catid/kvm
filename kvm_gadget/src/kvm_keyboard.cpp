@@ -72,7 +72,7 @@ bool KeyboardEmulator::SendReport(uint8_t modifier_keys, const uint8_t* keypress
 
     ssize_t written = write(fd, buffer, 8);
     if (written != 8) {
-        Logger.Error("Failed to write keyboard device: errno=", errno)
+        Logger.Error("Failed to write keyboard device: errno=", errno);
         return false;
     }
 
