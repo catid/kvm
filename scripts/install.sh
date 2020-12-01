@@ -18,6 +18,9 @@ fi
 
 echo "Installing /boot/config.txt change: Enables firmware for dwc2 to get loaded"
 
+echo "Generating self-signed certificate for SSL"
+openssl req -newkey rsa:2048 -x509 -sha256 -nodes -out /home/pi/kvm/scripts/cert.pem -keyout /home/pi/kvm/scripts/key.pem -days 800 -subj '/C=US/ST=California/L=Irvine/O=Catid/OU=Catid/CN=kvm'
+
 if grep -Fxq "dtoverlay=dwc2" /boot/config.txt
 then
     echo "Already installed (skipped)."

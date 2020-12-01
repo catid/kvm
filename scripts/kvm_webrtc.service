@@ -4,9 +4,6 @@ DefaultDependencies=true
 StartLimitBurst=1000
 StartLimitIntervalSec=10
 
-# Run kvm_https first because it generates keys
-After=kvm_https.service
-
 [Service]
 Type=simple
 ExecStart=/home/pi/kvm/scripts/start_webrtc.sh

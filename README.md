@@ -76,7 +76,7 @@ https://www.tomshardware.com/how-to/raspberry-pi-change-hostname
 
 This may be a good time to change the SSH password on the device to a more secure password.
 
-Now build and install the KVM software:
+Build and install the KVM software in the SSH session:
 
 ```
 cd ~
@@ -90,7 +90,7 @@ cmake ..
 make -j4
 ```
 
-Now to install the KVM software run:
+Install the KVM software:
 
 ```
 cd /home/pi/kvm/scripts/
