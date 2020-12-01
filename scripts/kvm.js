@@ -1,3 +1,4 @@
+// Select HTTPS backend if HTTPS is used for front-end
 var server = null;
 if(window.location.protocol === 'http:') {
     server = "http://" + window.location.hostname + ":8088/janus";

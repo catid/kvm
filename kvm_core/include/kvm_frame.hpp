@@ -39,6 +39,7 @@ struct Frame
     int Width = 0;
     int Height = 0;
     PixelFormat Format = PixelFormat::YUV422P;
+    int AllocatedBytes = 0;
 
     uint8_t* Planes[3];
 };

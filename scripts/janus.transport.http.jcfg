@@ -4,7 +4,8 @@ general: {
     threads = "unlimited"
     http = true
     port = 8088
-    https = false
+    https = true
+    secure_port = 8089
 }
 admin: {
     admin_base_path = "/admin"
@@ -12,4 +13,8 @@ admin: {
     admin_http = false
     admin_port = 7088
     admin_https = false
+}
+certificates: {
+	cert_pem = "/home/pi/kvm/scripts/cert.pem"
+	cert_key = "/home/pi/kvm/scripts/key.pem"
 }

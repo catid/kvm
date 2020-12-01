@@ -4,7 +4,8 @@
     MMAL Encoder for Raspberry Pi
 
     References:
-    https://www.itu.int/rec/T-REC-H.264
+    [1] https://www.itu.int/rec/T-REC-H.264
+    [2] https://github.com/raspberrypi/userland/blob/master/interface/mmal/
 */
 
 #pragma once

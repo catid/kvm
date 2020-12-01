@@ -58,7 +58,8 @@ std::shared_ptr<Frame> FramePool::Allocate(int w, int h, PixelFormat format)
     frame->Format = format;
 
     if (format == PixelFormat::RGB24) {
-        uint8_t* data = AlignedAllocate(w * h * 3);
+        frame->AllocatedBytes = w * h * 3;
+        uint8_t* data = AlignedAllocate(frame->AllocatedBytes);
         if (!data) {
             Logger.Error("Out of memory: Unable to allocate more raw frames");
             return nullptr;
@@ -80,7 +81,8 @@ std::shared_ptr<Frame> FramePool::Allocate(int w, int h, PixelFormat format)
         return nullptr;
     }
 
-    uint8_t* data = AlignedAllocate(y_plane_bytes + uv_plane_bytes * 2);
+    frame->AllocatedBytes = y_plane_bytes + uv_plane_bytes * 2;
+    uint8_t* data = AlignedAllocate(frame->AllocatedBytes);
     if (!data) {
         Logger.Error("Out of memory: Unable to allocate more raw frames");
         return nullptr;

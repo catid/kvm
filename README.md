@@ -3,7 +3,7 @@
 
 This software runs on a Raspberry Pi 4 with an HDMI/USB adapter attached.
 
-The USB C port is configured so that the Pi acts as a keyboard/mouse emulator.
+The USB-C port is configured so that the Pi acts as a keyboard/mouse emulator.
 
 By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target device remotely, as if you were sitting at the computer with a keyboard and mouse attached to it.  You will be able to access the BIOS and boot menus of the device remotely.
 
@@ -24,7 +24,7 @@ Amazon List (Containing these items): https://www.amazon.com/hz/wishlist/ls/25IK
 
 Required hardware:
 
-* Raspberry Pi 4: https://www.amazon.com/dp/B07TC2BK1X/
+* Raspberry Pi 4 (The 1 GB RAM model should work, untested): https://www.amazon.com/dp/B07TC2BK1X/
 * Protective Case: https://www.amazon.com/dp/B07X5Y81C6/
 * SD Card: https://www.amazon.com/dp/B073JYC4XM/
 * SD Card Reader: https://www.amazon.com/dp/B006T9B6R2/
@@ -32,12 +32,12 @@ Required hardware:
 * HDMI Cable (3.3 Feet): https://www.amazon.com/dp/B07FFS7RH1/
 * USB-C to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01GGKYS6E/
 
-Recommended hardware:
+Recommended additional hardware:
 
-The TinyPilot project has built a power/data splitter that is super useful when working with target devices that cannot supply full power to the Raspberry Pi.
+The TinyPilot project has built a power/data splitter that is super useful when working with target devices that cannot supply full power to the Raspberry Pi.  This splitter requires two additional Micro USB cables.
 
 * Power/Data Splitter: https://tinypilotkvm.com/product/tinypilot-power-connector
-* Micro USB to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01JPDTZXK
+* 2x Micro USB to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01JPDTZXK
 
 
 ## Hardware Setup
@@ -113,7 +113,7 @@ sudo ./install.sh
 
 ## Credits
 
-The keyboard/mouse driver setup script is copied from the TinyPilot software project at https://tinypilotkvm.com/
+The keyboard/mouse driver setup script is copied from the (MIT Licensed) TinyPilot software project at https://tinypilotkvm.com/
 
 The author of TinyPilot is pushing towards commercializing using the Raspberry Pi for KVM.  I did not personally decide to commercialize this hardware solution because multiple products for IP-KVM already exist.  It does seem to be producing a decent income for the author of TinyPilot, which is interesting.
 

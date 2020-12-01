@@ -12,7 +12,16 @@ static logger::Channel Logger("Capture");
 
 
 //------------------------------------------------------------------------------
-// Convert YUV422 to YUV420
+// Constants
+
+// Define this to use the hardware decoder for JPEG.
+// This is currently disabled because it takes 85 milliseconds to decode,
+// which is far too slow for the 30 FPS input rate.
+//#define ENABLE_BROADCOM_DECODER
+
+
+//------------------------------------------------------------------------------
+// Tools
 
 /*
     Convert a single chroma plane of YUV422 -> YUV420
@@ -67,10 +76,12 @@ static void ConvertYuv422toYuv420(const uint8_t* src, uint8_t* dest, int w, int 
 
 bool JpegDecoder::Initialize()
 {
+#ifdef ENABLE_BROADCOM_DECODER
     BRCMJPEG_STATUS_T status = brcmjpeg_create(BRCMJPEG_TYPE_DECODER, &BroadcomDecoder);
     if (status != BRCMJPEG_SUCCESS || !BroadcomDecoder) {
         Logger.Warn("brcmjpeg_create failed: status=", status, " Cannot use hardware JPEG decoder");
     }
+#endif // ENABLE_BROADCOM_DECODER
 
     Handle = tjInitDecompress();
     if (!Handle) {
@@ -103,6 +114,7 @@ std::shared_ptr<Frame> JpegDecoder::Decompress(const uint8_t* data, int bytes)
         }
     }
 
+    // Read JPEG header
     int w = 0, h = 0, subsamp = 0;
     int r = tjDecompressHeader2(
         Handle,
@@ -116,17 +128,7 @@ std::shared_ptr<Frame> JpegDecoder::Decompress(const uint8_t* data, int bytes)
         return nullptr;
     }
 
-    /*
-        Benchmark results on a selected desktop image:
-
-        YUV422 + Conversion to YUV420: 16.5 milliseconds (avg)
-        YUV420 Video Encode: 24 milliseconds (avg)
-
-        TurboJPEG Conversion to RGB: 17.5 milliseconds
-        RGB Video Encode: 28.5 milliseconds (avg)
-    */
-#if 1 // Faster but more complex:
-
+    // Validate subsampling
     PixelFormat format;
     if (subsamp == TJSAMP_420) {
         format = PixelFormat::YUV420P;
@@ -146,77 +148,72 @@ std::shared_ptr<Frame> JpegDecoder::Decompress(const uint8_t* data, int bytes)
         return nullptr;
     }
 
+    // Allocate a frame for the raw image
     auto frame = Pool.Allocate(w, h, format);
     if (!frame) {
         Logger.Error("Pool.Allocate failed");
         return nullptr;
     }
 
-    int strides[3] = {
-        w,
-        w/2,
-        w/2
-    };
+    if (BroadcomDecoder)
+    {
+        // Decode the JPEG
+        BRCMJPEG_REQUEST_T request{};
+        request.input = data;
+        request.input_size = bytes;
+        request.output = frame->Planes[0];
+        request.output_alloc_size = frame->AllocatedBytes;
+        request.pixel_format = PIXEL_FORMAT_I420;
 
-    uint8_t* planes[3] = {
-        frame->Planes[0],
-        frame->Planes[1],
-        frame->Planes[2]
-    };
-
-    if (subsamp == TJSAMP_422) {
-        // Use larger temporary space instead
-        planes[1] = Yuv422TempFrame->Planes[1];
-        planes[2] = Yuv422TempFrame->Planes[2];
-    }
-
-    r = tjDecompressToYUVPlanes(
-        Handle,
-        (uint8_t*)data,
-        bytes,
-        planes,
-        w,
-        strides,
-        h,
-        TJFLAG_ACCURATEDCT);
-    if (r != 0) {
-        Logger.Error("tjDecompressToYUVPlanes failed: r=", r, " err=", tjGetErrorStr(), " inlen=", bytes, " w=", w, " h=", h);
-        return nullptr;
-    }
-
-    if (subsamp == TJSAMP_422) {
-        // Note: Seems to require "num_threads(2)" to actually run operations in parallel.
-        // When they run in parallel, this operation takes about 1.5 milliseconds.
-#pragma omp parallel for num_threads(2)
-        for (int i = 1; i <= 2; ++i) {
-            ConvertYuv422toYuv420(Yuv422TempFrame->Planes[i], frame->Planes[i], w, h);
+        BRCMJPEG_STATUS_T status = brcmjpeg_process(BroadcomDecoder, &request);
+        if (status != BRCMJPEG_SUCCESS) {
+            Logger.Error("brcmjpeg_process failed to decode JPEG: len=", bytes);
+            return nullptr;
         }
     }
+    else
+    {
+        int strides[3] = {
+            w,
+            w/2,
+            w/2
+        };
 
-#else // RGB:
+        uint8_t* planes[3] = {
+            frame->Planes[0],
+            frame->Planes[1],
+            frame->Planes[2]
+        };
 
-    auto frame = Pool.Allocate(w, h, PixelFormat::RGB24);
-    if (!frame) {
-        Logger.Error("Allocate failed");
-        return nullptr;
+        if (subsamp == TJSAMP_422) {
+            // Use larger temporary space instead
+            planes[1] = Yuv422TempFrame->Planes[1];
+            planes[2] = Yuv422TempFrame->Planes[2];
+        }
+
+        r = tjDecompressToYUVPlanes(
+            Handle,
+            (uint8_t*)data,
+            bytes,
+            planes,
+            w,
+            strides,
+            h,
+            TJFLAG_ACCURATEDCT);
+        if (r != 0) {
+            Logger.Error("tjDecompressToYUVPlanes failed: r=", r, " err=", tjGetErrorStr(), " inlen=", bytes, " w=", w, " h=", h);
+            return nullptr;
+        }
+
+        if (subsamp == TJSAMP_422) {
+            // Note: Seems to require "num_threads(2)" to actually run operations in parallel.
+            // When they run in parallel, this operation takes about 1.5 milliseconds.
+#pragma omp parallel for num_threads(2)
+            for (int i = 1; i <= 2; ++i) {
+                ConvertYuv422toYuv420(Yuv422TempFrame->Planes[i], frame->Planes[i], w, h);
+            }
+        }
     }
-
-    r = tjDecompress2(
-        Handle,
-        (uint8_t*)data,
-        bytes,
-        frame->Planes[0],
-        w,
-        w*3,
-        h,
-        TJPF_RGB,
-        TJFLAG_ACCURATEDCT);
-    if (r != 0) {
-        Logger.Error("tjDecompressToYUVPlanes failed: r=", r, " err=", tjGetErrorStr(), " inlen=", bytes, " w=", w, " h=", h);
-        return nullptr;
-    }
-
-#endif
 
     return frame;
 }
