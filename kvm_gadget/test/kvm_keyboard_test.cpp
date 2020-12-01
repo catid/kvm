@@ -22,7 +22,17 @@ int main(int argc, char* argv[])
         return kAppFail;
     }
 
-    keyboard.Send('A');
+    uint8_t reports[7] = {
+        0x01,
+        0x00, 0x01, 0x04,
+        0x02,
+        0x00, 0x00,
+    };
+
+    if (!keyboard.ParseReports(reports, 7)) {
+        Logger.Error("ParseReports failed");
+        return kAppFail;
+    }
 
     return kAppSuccess;
 }
