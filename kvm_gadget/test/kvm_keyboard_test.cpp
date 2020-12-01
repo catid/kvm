@@ -1,6 +1,6 @@
 // Copyright 2020 Christopher A. Taylor
 
-#include "kvm_gadget.hpp"
+#include "kvm_keyboard.hpp"
 #include "kvm_logger.hpp"
 using namespace kvm;
 
@@ -23,17 +23,6 @@ int main(int argc, char* argv[])
     }
 
     keyboard.Send('A');
-
-    MouseEmulator mouse;
-
-    if (!mouse.Initialize()) {
-        Logger.Error("Mouse initialization failed");
-        return kAppFail;
-    }
-
-    mouse.MouseMove(0, 0);
-
-    mouse.MouseLeftClick(true);
 
     return kAppSuccess;
 }

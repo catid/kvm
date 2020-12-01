@@ -18,7 +18,7 @@
 #include <sstream>
 
 #include "kvm_pipeline.hpp"
-#include "kvm_gadget.hpp"
+#include "kvm_keyboard.hpp"
 #include "kvm_logger.hpp"
 using namespace kvm;
 
@@ -28,7 +28,6 @@ static logger::Channel Logger("plugin");
 
 static VideoPipeline m_Pipeline;
 static KeyboardEmulator m_Keyboard;
-static MouseEmulator m_Mouse;
 
 struct ClientData
 {
@@ -76,9 +75,6 @@ int plugin_init(janus_callbacks* callback, const char* /*config_path*/)
         });
     });
 
-    if (!m_Mouse.Initialize()) {
-        Logger.Error("Failed to initialize the mouse emulation");
-    }
     if (!m_Keyboard.Initialize()) {
         Logger.Error("Failed to initialize the keyboard emulation");
     }
@@ -91,7 +87,6 @@ void plugin_destroy(void)
 {
     m_WorkerNode.Shutdown();
     m_Pipeline.Shutdown();
-    m_Mouse.Shutdown();
     m_Keyboard.Shutdown();
 }
 
@@ -336,7 +331,9 @@ void plugin_incoming_rtcp(janus_plugin_session* /*handle*/, int /*video*/, char*
     * @param[in] len The buffer lenght */
 void plugin_incoming_data(janus_plugin_session* /*handle*/, char* buf, int len)
 {
-    Logger.Info("plugin_incoming_data: Ignored len=", len, " data=", buf);
+    if (!m_Keyboard.ParseReports((const uint8_t*)buf, len)) {
+        Logger.Error("m_Keyboard.ParseReports failed for len=", len);
+    }
 }
 
 /*! \brief Method to be notified by the core when too many NACKs have

@@ -6,12 +6,13 @@ project(kvm_gadget LANGUAGES CXX)
 # Source Files
 
 set(INCLUDE_FILES
-    include/kvm_gadget.hpp
+    include/kvm_keyboard.hpp
 )
 
 set(SOURCE_FILES
     ${INCLUDE_FILES}
-    src/kvm_gadget.cpp
+    src/kvm_keyboard.cpp
+    src/Counter.h
 )
 
 
@@ -33,10 +34,10 @@ target_link_libraries(kvm_gadget
 install(TARGETS kvm_gadget DESTINATION lib)
 install(FILES ${INCLUDE_FILES} DESTINATION include)
 
-# kvm_gadget_test application
+# kvm_keyboard_test application
 
-add_executable(kvm_gadget_test test/kvm_gadget_test.cpp)
-target_link_libraries(kvm_gadget_test
+add_executable(kvm_keyboard_test test/kvm_keyboard_test.cpp)
+target_link_libraries(kvm_keyboard_test
     kvm_gadget
 )
-install(TARGETS kvm_gadget_test DESTINATION bin)
+install(TARGETS kvm_keyboard_test DESTINATION bin)
