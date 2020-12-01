@@ -11,7 +11,6 @@ var handle = null;
 var opaqueId = "oid-"+Janus.randomString(12);
 var bitrateTimer = null;
 
-
 function sendData(text) {
     handle.data({
         text: text
@@ -40,54 +39,172 @@ function watchStream() {
     handle.send({"message": body});
 }
 
+// https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
+// See: Page 53 Section 10 Keyboard/Keypad Page (0x07)
+
+// USB keyboard modifier codes:
+// https://wiki.osdev.org/USB_Human_Interface_Devices
+
 // http://www.javascriptkeycode.com/
 // https://www.asciitable.com/
 // https://api.jquery.com/keyup/
 function serializeKey(event) {
     var s = String.fromCharCode(event.which);
-    if (event.altKey) {
-        s += "a"; // ALT flag
-    }
+
+    // Modifiers
+    var modifier_keys = 0;
     if (event.ctrlKey) {
-        s += "c"; // CTRL flag
+        modifier_keys |= 1 << 0; // Left Ctrl
     }
+    if (event.shiftKey) {
+        modifier_keys |= 1 << 1; // Left Shift
+    }
+    if (event.altKey) {
+        modifier_keys |= 1 << 2; // Left Alt
+    }
+
+    // Scan code
+    var code = 0;
     if (event.which >= 65 && event.which <= 90) {
-        var code = event.key.charCodeAt(0);
-        if (code >= 97) {
-            s += "l"; // Lower-case flag
-        }
-    }
-    else if (event.which == 16) {
-        if (event.code == "ShiftRight") {
-            s += "r"; // Right flag
-        }
-    }
-    else if (event.which == 17) {
-        if (event.code == "ControlRight") {
-            s += "r"; // Right flag
-        }
-    }
-    else if (event.which == 18) {
-        if (event.code == "AltRight") {
-            s += "r"; // Right flag
+        code = event.which - 65 + 4; // Letter keys
+        if (event.key.charCodeAt(0) < 97) {
+            modifier_keys |= 1 << 1; // Left Shift
         }
     }
     else if (event.which >= 48 && event.which <= 57) {
         // 0-9
-        if (event.shiftKey) {
-            s += "s"; // Shift key flag
+        switch (event.key) {
+        case ')': // fall-thru
+        case '0': code = 39; break;
+        case '!': // fall-thru
+        case '1': code = 30; break;
+        case '@': // fall-thru
+        case '2': code = 31; break;
+        case '#': // fall-thru
+        case '3': code = 32; break;
+        case '$': // fall-thru
+        case '4': code = 33; break;
+        case '%': // fall-thru
+        case '5': code = 34; break;
+        case '^': // fall-thru
+        case '6': code = 35; break;
+        case '&': // fall-thru
+        case '7': code = 36; break;
+        case '*': // fall-thru
+        case '8': code = 37; break;
+        case '(': // fall-thru
+        case '9': code = 38; break;
         }
+    }
+    else if (event.which >= 96 && event.which <= 111) {
+        // NumPad
+        switch (event.key) {
+        case 96: code = 98; break; // NumPad 0
+        case 97: code = 89; break; // NumPad 1
+        case 98: code = 90; break; // NumPad 2
+        case 99: code = 91; break; // NumPad 3
+        case 100: code = 92; break; // NumPad 4
+        case 101: code = 93; break; // NumPad 5
+        case 102: code = 94; break; // NumPad 6
+        case 103: code = 95; break; // NumPad 7
+        case 104: code = 96; break; // NumPad 8
+        case 105: code = 97; break; // NumPad 9
+        case 106: code = 85; break; // NumPad *
+        case 107: code = 87; break; // NumPad +
+        case 108: code = 99; break; // NumPad . (period)
+        case 109: code = 86; break; // NumPad -
+        case 110: code = 99; break; // NumPad . (decimal point)
+        case 111: code = 84; break; // NumPad /
+        }
+    }
+    else if (event.which >= 112 && event.which <= 123) {
+        code = event.which - 112 + 58; // F1 - F12
     }
     else if (event.which >= 186 && event.which <= 222) {
         // ; to '
-        if (event.shiftKey) {
-            s += "s"; // Shift key flag
+        switch (event.key) {
+        case '-': // fall-thru
+        case '_': code = 45; break;
+        case '=': // fall-thru
+        case '+': code = 46; break;
+        case '[': // fall-thru
+        case '{': code = 47; break;
+        case ']': // fall-thru
+        case '}': code = 48; break;
+        case '\\': // fall-thru
+        case '|': code = 49; break;
+        case ';': // fall-thru
+        case ':': code = 51; break;
+        case '\'': // fall-thru
+        case '"': code = 52; break;
+        case '`': // fall-thru
+        case '~': code = 53; break;
+        case ',': // fall-thru
+        case '<': code = 54; break;
+        case '.': // fall-thru
+        case '>': code = 55; break;
+        case '/': // fall-thru
+        case '?': code = 56; break;
+        }
+    }
+    else if (event.which == 16) {
+        if (event.code == "ShiftRight") {
+            code = 229; // RightShift
+        } else {
+            code = 225; // LeftShift
+        }
+    }
+    else if (event.which == 17) {
+        if (event.code == "ControlRight") {
+            code = 228; // RightControl
+        } else {
+            code = 224; // LeftControl
+        }
+    }
+    else if (event.which == 18) {
+        if (event.code == "AltRight") {
+            code = 230; // RightAlt
+        } else {
+            code = 226; // LeftAlt
+        }
+    }
+    else {
+        switch (event.which) {
+        case 13: code = 40; break; // Return
+        case 27: code = 41; break; // Escape
+        case 8: code = 42; break; // BackSpace
+        case 9: code = 43; break; // Tab
+        case 32: code = 44; break; // Space
+        case 91: code = 227; break; // Left Super
+        case 92: code = 231; break; // Right Super
+        case 20: code = 57; break; // Caps Lock
+        case 44: code = 70; break; // PrintScreen
+        case 144: code = 83; break; // Num Lock
+        case 145: code = 71; break; // Scroll Lock
+        case 19: code = 72; break; // Pause
+        case 45: code = 73; break; // Insert
+        case 36: code = 74; break; // Home
+        case 33: code = 75; break; // PageUp
+        case 46: code = 76; break; // Delete
+        case 35: code = 77; break; // End
+        case 34: code = 78; break; // PageDown
+        case 39: code = 79; break; // RightArrow
+        case 37: code = 80; break; // LeftArrow
+        case 40: code = 81; break; // DownArrow
+        case 38: code = 82; break; // UpArrow
+        case 173: code = 127; break; // Mute
+        case 174: code = 129; break; // VolumeDown
+        case 175: code = 128; break; // VolumeUp
+        case 93: code = 119; break; // Select
+        case 177: code = 182; break; // PrevTrack
+        case 176: code = 181; break; // NextTrack
+        case 179: code = 205; break; // PlayPause
         }
     }
     return s;
 }
 
-var LastKeyDown;
+var NextIdentifier = 1;
 
 function startCapture() {
     $(document).keydown(function(event){
@@ -95,7 +212,13 @@ function startCapture() {
         if (data == LastKeyDown) {
             return;
         }
+
+        NextIdentifier++;
+
+        var x = new Uint8Array();
+
         sendData(data);
+
         LastKeyDown = data;
     });
     $(document).keyup(function(event){
