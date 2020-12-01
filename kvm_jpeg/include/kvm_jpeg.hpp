@@ -12,6 +12,8 @@
 #include "kvm_core.hpp"
 #include "kvm_frame.hpp"
 
+#include "brcmjpeg.h"
+
 #include <turbojpeg.h>
 
 namespace kvm {
@@ -23,7 +25,10 @@ namespace kvm {
 class JpegDecoder
 {
 public:
-    ~JpegDecoder();
+    ~JpegDecoder()
+    {
+        Shutdown();
+    }
 
     std::shared_ptr<Frame> Decompress(const uint8_t* data, int bytes);
 
@@ -33,12 +38,18 @@ public:
     }
 
 protected:
+    // TurboJpeg decoder
     tjhandle Handle = nullptr;
+
+    // BRCM hw decoder
+    BRCMJPEG_T* BroadcomDecoder = nullptr;
+
     FramePool Pool;
 
     std::shared_ptr<Frame> Yuv422TempFrame;
 
     bool Initialize();
+    void Shutdown();
 };
 
 

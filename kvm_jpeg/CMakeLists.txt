@@ -44,7 +44,8 @@ target_include_directories(kvm_jpeg PUBLIC include)
 target_link_libraries(kvm_jpeg
     PUBLIC
         kvm_core
-        ${TJ_LIB}
+        ${TJ_LIB} # TurboJpeg
+        brcmjpeg # extern/brcmjpeg project
         OpenMP::OpenMP_CXX
 )
 install(TARGETS kvm_jpeg DESTINATION lib)

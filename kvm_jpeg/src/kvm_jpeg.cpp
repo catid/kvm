@@ -63,20 +63,44 @@ static void ConvertYuv422toYuv420(const uint8_t* src, uint8_t* dest, int w, int 
 
 
 //------------------------------------------------------------------------------
-// Decoder
+// JpegDecoder
 
-JpegDecoder::~JpegDecoder()
+bool JpegDecoder::Initialize()
+{
+    BRCMJPEG_STATUS_T status = brcmjpeg_create(BRCMJPEG_TYPE_DECODER, &BroadcomDecoder);
+    if (status != BRCMJPEG_SUCCESS || !BroadcomDecoder) {
+        Logger.Warn("brcmjpeg_create failed: status=", status, " Cannot use hardware JPEG decoder");
+    }
+
+    Handle = tjInitDecompress();
+    if (!Handle) {
+        Logger.Error("tjInitDecompress failed");
+        return false;
+    }
+
+    return true;
+}
+
+void JpegDecoder::Shutdown()
 {
     if (Handle) {
         tjDestroy(Handle);
         Handle = nullptr;
     }
+
+    if (BroadcomDecoder) {
+        brcmjpeg_release(BroadcomDecoder);
+        BroadcomDecoder = nullptr;
+    }
 }
 
 std::shared_ptr<Frame> JpegDecoder::Decompress(const uint8_t* data, int bytes)
 {
-    if (!Initialize()) {
-        return nullptr;
+    // If TurboJpeg handle is not initialized yet:
+    if (!Handle) {
+        if (!Initialize()) {
+            return nullptr;
+        }
     }
 
     int w = 0, h = 0, subsamp = 0;
@@ -195,21 +219,6 @@ std::shared_ptr<Frame> JpegDecoder::Decompress(const uint8_t* data, int bytes)
 #endif
 
     return frame;
-}
-
-bool JpegDecoder::Initialize()
-{
-    if (Handle) {
-        return true;
-    }
-
-    Handle = tjInitDecompress();
-    if (!Handle) {
-        Logger.Error("tjInitDecompress failed");
-        return false;
-    }
-
-    return true;
 }
 
 
