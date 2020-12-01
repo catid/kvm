@@ -34,14 +34,16 @@ else
     echo "dwc2" >> /etc/modules
 fi
 
-echo "Installing kvm_gadget, kvm_https, kvm_webrtc systemd services"
+echo "Installing kvm_gadget, kvm_https, kvm_http, kvm_webrtc systemd services"
 cp kvm_gadget.service /etc/systemd/system/
 cp kvm_https.service /etc/systemd/system/
+cp kvm_http.service /etc/systemd/system/
 cp kvm_webrtc.service /etc/systemd/system/
 
-echo "Enabling kvm_gadget, kvm_https, kvm_webrtc systemd services"
+echo "Enabling kvm_gadget, kvm_https, kvm_http, kvm_webrtc systemd services"
 systemctl enable kvm_gadget
 systemctl enable kvm_https
+systemctl enable kvm_http
 systemctl enable kvm_webrtc
 
 echo "Syncing filesystem"
