@@ -1,5 +1,5 @@
 [Unit]
-Description=Input Emulation
+Description=KVM: Input Emulation
 DefaultDependencies=true
 
 [Service]

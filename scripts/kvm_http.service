@@ -1,5 +1,5 @@
 [Unit]
-Description=HTTP Server
+Description=KVM: HTTP Server
 DefaultDependencies=true
 StartLimitBurst=1000
 StartLimitIntervalSec=10

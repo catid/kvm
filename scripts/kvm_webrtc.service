@@ -1,5 +1,5 @@
 [Unit]
-Description=WebRTC Server
+Description=KVM: WebRTC Server
 DefaultDependencies=true
 StartLimitBurst=1000
 StartLimitIntervalSec=10

@@ -14,6 +14,7 @@ Features:
 * Keystrokes and mouse movements are relayed to the target device.
 * WebRTC video and data channels are used to ensure low-latency.
 * All data sent over the network is encrypted using TLS.
+* Robust to replugging HDMI capture card while in use.
 
 
 ## Hardware Required

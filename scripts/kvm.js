@@ -157,12 +157,12 @@ function attachStream() {
                     }
                     else if(status === 'stopped') {
                         $("#status-text").text("stopped");
-                        stopStream();
                     }
                 }
             } else if (msg["error"]) {
                 console.error(msg["error"]);
                 stopStream();
+                watchStream();
                 return;
             }
 
