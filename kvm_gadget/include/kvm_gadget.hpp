@@ -12,38 +12,45 @@ namespace kvm {
 
 
 //------------------------------------------------------------------------------
-// MmalEncoder
+// KeyboardEmulator
 
-class MmalEncoder
+class KeyboardEmulator
 {
 public:
-    ~MmalEncoder()
+    ~KeyboardEmulator()
     {
         Shutdown();
     }
 
-    void SetSettings(const MmalEncoderSettings& settings)
-    {
-        Settings = settings;
-    }
-
+    bool Initialize();
     void Shutdown();
 
-    // Pointer is valid until the next Encode() call
-    uint8_t* Encode(const std::shared_ptr<Frame>& frame, bool force_keyframe, int& bytes);
+    void Send(char ch);
 
 protected:
-    MmalEncoderSettings Settings;
+};
 
-    MMAL_WRAPPER_T* Encoder = nullptr;
-    int Width = 0, Height = 0;
 
-    MMAL_PORT_T* PortIn = nullptr;
-    MMAL_PORT_T* PortOut = nullptr;
+//------------------------------------------------------------------------------
+// MouseEmulator
 
-    std::vector<uint8_t> Data;
+class MouseEmulator
+{
+public:
+    ~MouseEmulator()
+    {
+        Shutdown();
+    }
 
-    bool Initialize(int width, int height, int input_encoding);
+    bool Initialize();
+    void Shutdown();
+
+    void MouseMove(int x, int y);
+    void MouseLeftClick(bool down);
+    void MouseMiddleClick(bool down);
+    void MouseRightClick(bool down);
+
+protected:
 };
 
 

@@ -39,6 +39,7 @@ target_link_libraries(kvm_janus
     PUBLIC
         ${Glib_LIBRARY}
         kvm_pipeline
+        kvm_gadget
 )
 
 install(TARGETS kvm_janus DESTINATION lib)

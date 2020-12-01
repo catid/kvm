@@ -3,21 +3,62 @@
 #include "kvm_gadget.hpp"
 #include "kvm_logger.hpp"
 
-#include <linux/platform_device.h>
-#include <linux/usb/g_hid.h>
-
 namespace kvm {
 
 static logger::Channel Logger("Gadget");
 
 
 //------------------------------------------------------------------------------
-// Constants
+// KeyboardEmulator
 
+bool KeyboardEmulator::Initialize()
+{
+
+}
+
+void KeyboardEmulator::Shutdown()
+{
+
+}
+
+void KeyboardEmulator::Send(char ch)
+{
+
+}
 
 
 //------------------------------------------------------------------------------
-// Tools
+// MouseEmulator
+
+bool MouseEmulator::Initialize()
+{
+
+}
+
+void MouseEmulator::Shutdown()
+{
+
+}
+
+void MouseEmulator::MouseMove(int x, int y)
+{
+
+}
+
+void MouseEmulator::MouseLeftClick(bool down)
+{
+
+}
+
+void MouseEmulator::MouseMiddleClick(bool down)
+{
+
+}
+
+void MouseEmulator::MouseRightClick(bool down)
+{
+    
+}
 
 
 } // namespace kvm

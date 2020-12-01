@@ -18,6 +18,7 @@
 #include <sstream>
 
 #include "kvm_pipeline.hpp"
+#include "kvm_gadget.hpp"
 #include "kvm_logger.hpp"
 using namespace kvm;
 
@@ -26,6 +27,8 @@ static logger::Channel Logger("plugin");
 #include <jansson.h>
 
 static VideoPipeline m_Pipeline;
+static KeyboardEmulator m_Keyboard;
+static MouseEmulator m_Mouse;
 
 struct ClientData
 {
@@ -73,6 +76,13 @@ int plugin_init(janus_callbacks* callback, const char* /*config_path*/)
         });
     });
 
+    if (!m_Mouse.Initialize()) {
+        Logger.Error("Failed to initialize the mouse emulation");
+    }
+    if (!m_Keyboard.Initialize()) {
+        Logger.Error("Failed to initialize the keyboard emulation");
+    }
+
     return 0;
 }
 
@@ -81,6 +91,8 @@ void plugin_destroy(void)
 {
     m_WorkerNode.Shutdown();
     m_Pipeline.Shutdown();
+    m_Mouse.Shutdown();
+    m_Keyboard.Shutdown();
 }
 
 /*! \brief Informative method to request the API version this plugin was compiled against
