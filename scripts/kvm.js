@@ -48,9 +48,7 @@ function watchStream() {
 // http://www.javascriptkeycode.com/
 // https://www.asciitable.com/
 // https://api.jquery.com/keyup/
-function serializeKey(event) {
-    var s = String.fromCharCode(event.which);
-
+function convertKey(event) {
     // Modifiers
     var modifier_keys = 0;
     if (event.ctrlKey) {
@@ -201,7 +199,8 @@ function serializeKey(event) {
         case 179: code = 205; break; // PlayPause
         }
     }
-    return s;
+
+    return [modifier_keys, code];
 }
 
 var NextIdentifier = 1;
