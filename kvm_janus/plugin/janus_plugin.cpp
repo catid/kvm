@@ -1,8 +1,14 @@
+// Copyright 2020 Christopher A. Taylor
+
 /*
-    TODO:
-    Encoder Pipeline
-    Video Parser
-    RTP Payloader
+    Plugin for Meetecho's Janus Gateway WebRTC server
+
+    Runs the kvm_pipeline video pipeline, which produces H.264 video in Annex B format.
+    We packetize the video into RTP packets, which are then provided to Janus.
+    Janus encrypts the RTP into SRTP/UDP datagrams that are transmitted to connected browsers.
+
+    We also provide a WebRTC data-channel for receiving low-latency packets from the browsers.
+    The browser uses the data-channel interface to transmit keystrokes to the input emulator.
 */
 
 #include <janus/plugins/plugin.h>
@@ -23,14 +29,14 @@ static VideoPipeline m_Pipeline;
 
 struct ClientData
 {
-    janus_plugin_session *handle = nullptr;
+    janus_plugin_session* handle = nullptr;
     bool transmit = true;
 };
 
 static std::mutex m_Lock;
 static std::vector<ClientData> m_Clients;
 
-static janus_callbacks *m_Callbacks = nullptr;
+static janus_callbacks* m_Callbacks = nullptr;
 
 static RtpPayloader m_Payloader;
 
@@ -42,14 +48,14 @@ extern janus_plugin m_Plugin;
     * @param[in] callback The callback instance the plugin can use to contact the Janus core
     * @param[in] config_path Path of the folder where the configuration for this plugin can be found
     * @returns 0 in case of success, a negative integer in case of error */
-int plugin_init(janus_callbacks *callback, const char *config_path)
+int plugin_init(janus_callbacks* callback, const char* /*config_path*/)
 {
     m_Callbacks = callback;
 
     m_WorkerNode.Initialize("JanusWorker", 4/*max queue depth*/);
 
     m_Pipeline.Initialize([&](
-        uint64_t frame_number,
+        uint64_t /*frame_number*/,
         uint64_t shutter_usec,
         const uint8_t* data,
         int bytes
@@ -127,7 +133,7 @@ const char *plugin_get_package(void)
 /*! \brief Method to create a new session/handle for a peer
     * @param[in] handle The plugin/gateway session that will be used for this peer
     * @param[out] error An integer that may contain information about any error */
-void plugin_create_session(janus_plugin_session *handle, int *error)
+void plugin_create_session(janus_plugin_session* handle, int* /*error*/)
 {
     std::lock_guard<std::mutex> locker(m_Lock);
 
@@ -137,7 +143,7 @@ void plugin_create_session(janus_plugin_session *handle, int *error)
     m_Clients.push_back(data);
 }
 
-static void post_error(janus_plugin_session *handle, const std::string& transaction, int error_code, const std::string& cause)
+static void post_error(janus_plugin_session* handle, const std::string& transaction, int error_code, const std::string& cause)
 {
     Logger.Error("Error: ", cause);
 
@@ -149,7 +155,7 @@ static void post_error(janus_plugin_session *handle, const std::string& transact
     json_decref(event);
 }
 
-static void background_handle_message(janus_plugin_session *handle, const std::string& transaction, json_t *message, json_t *jsep)
+static void background_handle_message(janus_plugin_session* handle, const std::string& transaction, json_t* message, json_t* /*jsep*/)
 {
     json_t* request_obj = json_object_get(message, "request");
     if (!request_obj) {
@@ -231,7 +237,7 @@ static void background_handle_message(janus_plugin_session *handle, const std::s
     * @param[in] jsep The json_t object containing the JSEP type/SDP, if available
     * @returns A janus_plugin_result instance that may contain a response (for immediate/synchronous replies), an ack
     * (for asynchronously managed requests) or an error */
-struct janus_plugin_result *plugin_handle_message(janus_plugin_session *handle, char *transaction, json_t *message, json_t *jsep)
+struct janus_plugin_result* plugin_handle_message(janus_plugin_session* handle, char* transaction, json_t* message, json_t* jsep)
 {
     ScopedFunction ref_scope([&]() {
         if (message) {
@@ -275,7 +281,7 @@ struct janus_plugin_result *plugin_handle_message(janus_plugin_session *handle, 
 
 /*! \brief Callback to be notified when the associated PeerConnection is up and ready to be used
     * @param[in] handle The plugin/gateway session used for this peer */
-void plugin_setup_media(janus_plugin_session *handle)
+void plugin_setup_media(janus_plugin_session* handle)
 {
     std::lock_guard<std::mutex> locker(m_Lock);
 
@@ -294,7 +300,7 @@ void plugin_setup_media(janus_plugin_session *handle)
     * @param[in] video Whether this is an audio or a video frame
     * @param[in] buf The packet data (buffer)
     * @param[in] len The buffer lenght */
-void plugin_incoming_rtp(janus_plugin_session *handle, int video, char *buf, int len)
+void plugin_incoming_rtp(janus_plugin_session* /*handle*/, int /*video*/, char* /*buf*/, int /*len*/)
 {
     Logger.Info("plugin_incoming_rtp: Ignored");
 }
@@ -304,7 +310,7 @@ void plugin_incoming_rtp(janus_plugin_session *handle, int video, char *buf, int
     * @param[in] video Whether this is related to an audio or a video stream
     * @param[in] buf The message data (buffer)
     * @param[in] len The buffer lenght */
-void plugin_incoming_rtcp(janus_plugin_session *handle, int video, char *buf, int len)
+void plugin_incoming_rtcp(janus_plugin_session* /*handle*/, int /*video*/, char* /*buf*/, int /*len*/)
 {
     //Logger.Info("plugin_incoming_rtcp: Ignored");
 }
@@ -316,7 +322,7 @@ void plugin_incoming_rtcp(janus_plugin_session *handle, int video, char *buf, in
     * @param[in] handle The plugin/gateway session used for this peer
     * @param[in] buf The message data (buffer)
     * @param[in] len The buffer lenght */
-void plugin_incoming_data(janus_plugin_session *handle, char *buf, int len)
+void plugin_incoming_data(janus_plugin_session* /*handle*/, char* buf, int len)
 {
     Logger.Info("plugin_incoming_data: Ignored len=", len, " data=", buf);
 }
@@ -337,14 +343,14 @@ void plugin_incoming_data(janus_plugin_session *handle, char *buf, int len)
     * @param[in] uplink Whether this is related to the uplink (Janus to peer)
     * or downlink (peer to Janus)
     * @param[in] video Whether this is related to an audio or a video stream */
-void plugin_slow_link(janus_plugin_session *handle, int uplink, int video)
+void plugin_slow_link(janus_plugin_session* /*handle*/, int uplink, int video)
 {
     Logger.Info("plugin_slow_link: uplink=", uplink, " video=", video);
 }
 
 /*! \brief Callback to be notified about DTLS alerts from a peer (i.e., the PeerConnection is not valid any more)
     * @param[in] handle The plugin/gateway session used for this peer */
-void plugin_hangup_media(janus_plugin_session *handle)
+void plugin_hangup_media(janus_plugin_session* handle)
 {
     std::lock_guard<std::mutex> locker(m_Lock);
 
@@ -361,7 +367,7 @@ void plugin_hangup_media(janus_plugin_session *handle)
 /*! \brief Method to destroy a session/handle for a peer
     * @param[in] handle The plugin/gateway session used for this peer
     * @param[out] error An integer that may contain information about any error */
-void plugin_destroy_session(janus_plugin_session *handle, int *error)
+void plugin_destroy_session(janus_plugin_session* handle, int* /*error*/)
 {
     std::lock_guard<std::mutex> locker(m_Lock);
 
@@ -381,7 +387,7 @@ void plugin_destroy_session(janus_plugin_session *handle, int *error)
     * the string is always allocated, so don't return constants here
     * @param[in] handle The plugin/gateway session used for this peer
     * @returns A json_t object with the requested info */
-json_t *plugin_query_session(janus_plugin_session *handle)
+json_t* plugin_query_session(janus_plugin_session* /*handle*/)
 {
     return json_string("SessionInfoHere");
 }
