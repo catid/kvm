@@ -29,7 +29,7 @@ Features:
 
 `Hardware Setup`: Connect the Pi to a target device.
 
-Navigate to https://raspberrypi.local/ to access the KVM web app.
+Navigate to https://kvm.local/ to access the KVM web app.
 
 
 ## Hardware Required
@@ -76,7 +76,7 @@ This software currently requires that most of the system settings are the defaul
 
 ## Windows Setup
 
-On Windows you will need to install the Bonjour Print Services for Windows to resolve the hostname `raspberrypi.local`:
+On Windows you will need to install the Bonjour Print Services for Windows to resolve the hostname `kvm.local`:
 
 https://support.apple.com/kb/DL999?locale=en_US
 
@@ -110,9 +110,13 @@ make -j4
 
 cd /home/pi/kvm/scripts/
 sudo ./install.sh
+
+sudo sync
+
+sudo reboot now
 ```
 
-Reboot the Raspberry Pi.
+When the Raspberry Pi reboots, it will be hosting the KVM services.  You can view the logs by connecting to `ssh pi@kvm.local` with password `raspberry`, and then entering `sudo journalctl -fu kvm_webrtc -n 10000`
 
 
 ## Hardware Setup
@@ -123,7 +127,7 @@ Insert the USB-C to USB-A Adapter Cable into the USB-C port on the Raspberry Pi 
 
 Power on the target device.
 
-Navigate to https://raspberrypi.local/ to access the KVM web app.
+Navigate to https://kvm.local/ to access the KVM web app.
 
 
 ## Credits
