@@ -70,6 +70,8 @@ bool KeyboardEmulator::SendReport(uint8_t modifier_keys, const uint8_t* keypress
         buffer[2 + i] = keypresses[i];
     }
 
+    Logger.Info("SendReport: ", HexDump((const uint8_t*)buffer, 8));
+
     ssize_t written = write(fd, buffer, 8);
     if (written != 8) {
         Logger.Error("Failed to write keyboard device: errno=", errno);

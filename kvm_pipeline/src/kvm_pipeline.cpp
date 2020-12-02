@@ -188,7 +188,7 @@ void VideoPipeline::Start()
 
     // Please see kvm_encode.hpp for comments on these settings
     MmalEncoderSettings settings;
-    settings.Kbps = 5000;
+    settings.Kbps = 4000;
     settings.Framerate = 30;
     settings.GopSize = 60; // This affects the keyframe size
     Encoder.SetSettings(settings);

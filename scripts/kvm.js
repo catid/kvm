@@ -29,7 +29,10 @@ function startBitrateTimer() {
     bitrateTimer = setInterval(function() {
         var bitrate = handle.getBitrate();
         $('#bitrate-text').text(bitrate);
-        $('#resolution-text').text($("#remotevideo").get(0).videoWidth + "x" + $("#remotevideo").get(0).videoHeight);
+        var video = $("#remotevideo").get(0);
+        var w = video.videoWidth;
+        var h = video.videoHeight;
+        $('#resolution-text').text(w + "x" + h);
     }, 1000);
 }
 
@@ -38,6 +41,15 @@ function watchStream() {
     var body = { "request": "watch" };
     handle.send({"message": body});
 }
+
+const kLeftCtrl = 1 << 0;
+const kLeftShift = 1 << 1;
+const kLeftAlt = 1 << 2;
+const kLeftSuper = 1 << 3;
+const kRightCtrl = 1 << 4;
+const kRightShift = 1 << 5;
+const kRightAlt = 1 << 6;
+const kRightSuper = 1 << 7;
 
 // https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
 // See: Page 53 Section 10 Keyboard/Keypad Page (0x07)
@@ -52,13 +64,13 @@ function convertKey(event) {
     // Modifiers
     var modifier_keys = 0;
     if (event.ctrlKey) {
-        modifier_keys |= 1 << 0; // Left Ctrl
+        modifier_keys |= kLeftCtrl;
     }
     if (event.shiftKey) {
-        modifier_keys |= 1 << 1; // Left Shift
+        modifier_keys |= kLeftShift;
     }
     if (event.altKey) {
-        modifier_keys |= 1 << 2; // Left Alt
+        modifier_keys |= kLeftAlt;
     }
 
     // Scan code
@@ -66,7 +78,7 @@ function convertKey(event) {
     if (event.which >= 65 && event.which <= 90) {
         code = event.which - 65 + 4; // Letter keys
         if (event.key.charCodeAt(0) < 97) {
-            modifier_keys |= 1 << 1; // Left Shift
+            modifier_keys |= kLeftShift;
         }
     }
     else if (event.which >= 48 && event.which <= 57) {
@@ -203,32 +215,161 @@ function convertKey(event) {
     return [modifier_keys, code];
 }
 
-var NextIdentifier = 1;
+var NextIdentifier = 0;
+var KeysDown = [];
+var RecentReports = [];
+var SendTimer = null;
+
+function convertUint8ArrayToBinaryString(u8Array) {
+    var i, len = u8Array.length, b_str = "";
+    for (i=0; i<len; i++) {
+        b_str += String.fromCharCode(u8Array[i]);
+    }
+    return b_str;
+}
+
+function addReportWithKeysDown(modifier_keys) {
+    NextIdentifier++;
+    if (NextIdentifier >= 256) {
+        NextIdentifier = 0;
+    }
+
+    // Make a copy of the current keys that are down
+    var keys = KeysDown.slice();
+
+    // Check if there are any non-modifier keys
+    var found_non_modifier = false;
+    for (var i = 0; i < keys.length; ++i) {
+        // If this key is a non-modifier:
+        var key = keys[i];
+        if (key < 224 || key > 231) {
+            found_non_modifier = true;
+            break;
+        }
+    }
+
+    // If there are non-modifier keys:
+    if (found_non_modifier) {
+        // Eliminate any modifier keys that are already captured by the bitfield
+        for (var i = 0; i < keys.length; ++i) {
+            // If this key is a modifier:
+            var key = keys[i];
+            if (key >= 224 && key <= 231) {
+                switch (key) {
+                case 224: // fall-thru: Left Control
+                case 228: // Right Control
+                    if ((modifier_keys & (kLeftCtrl | kRightCtrl)) == 0) {
+                        // If modifier key does not capture this, then keep it.
+                        continue;
+                    }
+                    break;
+
+                case 225: // fall-thru: Left Shift
+                case 229: // Right Shift
+                    if ((modifier_keys & (kLeftShift | kRightShift)) == 0) {
+                        // If modifier key does not capture this, then keep it.
+                        continue;
+                    }
+                    break;
+
+                case 226: // fall-thru: Left Alt
+                case 230: // Right Alt
+                    if ((modifier_keys & (kLeftAlt | kRightAlt)) == 0) {
+                        // If modifier key does not capture this, then keep it.
+                        continue;
+                    }
+                    break;
+
+                case 227: // fall-thru: Left Super
+                case 231: // Right Super
+                    if ((modifier_keys & (kLeftSuper | kRightSuper)) == 0) {
+                        // If modifier key does not capture this, then keep it.
+                        continue;
+                    }
+                    break;
+                }
+                keys.slice(i, 1);
+                // Fix array index
+                --i;
+            }
+        }
+    }
+
+    var count = KeysDown.length;
+    if (count > 6) {
+        count = 6;
+    }
+
+    var report = [NextIdentifier, modifier_keys, count];
+    for (var i = 0; i < count; ++i) {
+        report.push(KeysDown[i]);
+    }
+
+    RecentReports.push(report);
+    if (RecentReports.length > 8) {
+        RecentReports.shift();
+    }
+}
+
+function sendReports() {
+    if (RecentReports.length > 0) {
+        var arr = [];
+        for (var i = 0; i < RecentReports.length; ++i) {
+            arr = arr.concat(RecentReports[i]);
+        }
+        sendData(convertUint8ArrayToBinaryString(arr));
+    }
+}
 
 function startCapture() {
     $(document).keydown(function(event){
-        var data = "D" + serializeKey(event);
-        if (data == LastKeyDown) {
+        var data = convertKey(event);
+
+        // If key is already down:
+        if (KeysDown.find(code => code == data[1])) {
             return;
         }
 
-        NextIdentifier++;
+        // Add key
+        KeysDown.push(data[1]);
 
-        var x = new Uint8Array();
-
-        sendData(data);
-
-        LastKeyDown = data;
+        addReportWithKeysDown(data[0]);
+        sendReports();
     });
     $(document).keyup(function(event){
-        sendData("U" + serializeKey(event));
-        LastKeyDown = null;
+        var data = convertKey(event);
+
+        // If key is already up:
+        if (!KeysDown.find(code => code == data[1])) {
+            return;
+        }
+
+        // Remove code from KeysDown array
+        for (var i = 0; i < KeysDown.length; i++) {
+            if (KeysDown[i] === data[1]) {
+                KeysDown.splice(i, 1);
+                break;
+            }
+        }
+
+        addReportWithKeysDown(data[0]);
+        sendReports();
     });
+
+    // Send reports every 20 milliseconds -> 1600 bytes/second.
+    // This is done to fill in for lost packets.
+    SendTimer = setInterval(function() {
+        sendReports();
+    }, 20);
 }
 
 function stopCapture() {
     $(document).off("keydown");
     $(document).off("keyup");
+    if (SendTimer) {
+        clearInterval(SendTimer);
+        SendTimer = null;
+    }
 }
 
 function startStream(jsep) {
