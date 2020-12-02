@@ -132,7 +132,7 @@ Navigate to https://kvm.local/ to access the KVM web app.
 
 * Provide SD card image for quicker setup.
 * Improve the on-screen keyboard and web interface for the web app.
-* 
+* Provide file transfer to target from browser via emulated USB storage device.
 
 
 ## Credits
