@@ -220,11 +220,40 @@ var KeysDown = [];
 var RecentReports = [];
 var SendTimer = null;
 
+// We need to send 8 bits per byte in a string, because Janus only supports sending strings.
+// But JavaScript cannot convert values with the high bit set to a single byte string AFAIK,
+// so this is encoding the high bits for every 7 bytes in one additional byte.
 function convertUint8ArrayToBinaryString(u8Array) {
-    var i, len = u8Array.length, b_str = "";
-    for (i=0; i<len; i++) {
-        b_str += String.fromCharCode(u8Array[i]);
+    var extra_bits = 0;
+    var extra_count = 0;
+
+    var b_str = "";
+    var len = u8Array.length;
+
+    for (var i = 0; i < len; i++) {
+        var x = u8Array[i];
+
+        // Clear high bit because otherwise it trigger weird Unicode conversions
+        b_str += String.fromCodePoint(x & 0x7f);
+
+        if (x & 0x80) {
+            extra_bits |= 1 << extra_count;
+        }
+        ++extra_count;
+
+        // Every 7 bytes, output an extra byte to store the missing high bits
+        if (extra_count >= 7) {
+            b_str += String.fromCodePoint(extra_bits);
+            extra_count = 0;
+            extra_bits = 0;
+        }
     }
+
+    // Add any extra bits
+    if (extra_count >= 1) {
+        b_str += String.fromCodePoint(extra_bits);
+    }
+
     return b_str;
 }
 
@@ -288,21 +317,21 @@ function addReportWithKeysDown(modifier_keys) {
                     }
                     break;
                 }
-                keys.slice(i, 1);
+                keys.splice(i, 1);
                 // Fix array index
                 --i;
             }
         }
     }
 
-    var count = KeysDown.length;
+    var count = keys.length;
     if (count > 6) {
         count = 6;
     }
 
-    var report = [NextIdentifier, modifier_keys, count];
+    var report = [NextIdentifier, 1 + count, modifier_keys];
     for (var i = 0; i < count; ++i) {
-        report.push(KeysDown[i]);
+        report.push(keys[i]);
     }
 
     RecentReports.push(report);
@@ -317,12 +346,15 @@ function sendReports() {
         for (var i = 0; i < RecentReports.length; ++i) {
             arr = arr.concat(RecentReports[i]);
         }
+
         sendData(convertUint8ArrayToBinaryString(arr));
     }
 }
 
 function startCapture() {
     $(document).keydown(function(event){
+        event.preventDefault();
+
         var data = convertKey(event);
 
         // If key is already down:
@@ -337,6 +369,8 @@ function startCapture() {
         sendReports();
     });
     $(document).keyup(function(event){
+        event.preventDefault();
+
         var data = convertKey(event);
 
         // If key is already up:
@@ -356,11 +390,11 @@ function startCapture() {
         sendReports();
     });
 
-    // Send reports every 20 milliseconds -> 1600 bytes/second.
+    // Send reports every 60 milliseconds -> ~500 bytes/second.
     // This is done to fill in for lost packets.
     SendTimer = setInterval(function() {
         sendReports();
-    }, 20);
+    }, 60);
 }
 
 function stopCapture() {

@@ -37,31 +37,10 @@ void KeyboardEmulator::Shutdown()
     }
 }
 
-bool KeyboardEmulator::ParseReports(const uint8_t* data, int bytes)
-{
-    bool success = true;
-
-    while (bytes >= 3)
-    {
-        Counter32 id = Counter32::ExpandFromTruncatedWithBias(PrevIdentifier, Counter8(data[0]), -32);
-
-        const uint8_t modifier_keys = data[1];
-        const int keypress_count = data[2];
-
-        if (id > PrevIdentifier) {
-            PrevIdentifier = id;
-            success &= SendReport(modifier_keys, data + 3, keypress_count);
-        }
-
-        data += 3 + keypress_count;
-        bytes -= 3 + keypress_count;
-    }
-
-    return success;
-}
-
 bool KeyboardEmulator::SendReport(uint8_t modifier_keys, const uint8_t* keypresses, int keypress_count)
 {
+    std::lock_guard<std::mutex> locker(Lock);
+
     char buffer[8] = {0};
 
     buffer[0] = modifier_keys;

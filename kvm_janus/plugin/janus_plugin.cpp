@@ -18,7 +18,7 @@
 #include <sstream>
 
 #include "kvm_pipeline.hpp"
-#include "kvm_keyboard.hpp"
+#include "kvm_transport.hpp"
 #include "kvm_logger.hpp"
 using namespace kvm;
 
@@ -33,10 +33,11 @@ struct ClientData
 {
     janus_plugin_session* handle = nullptr;
     bool transmit = true;
+    InputTransport Transport;
 };
 
 static std::mutex m_Lock;
-static std::vector<ClientData> m_Clients;
+static std::vector<std::shared_ptr<ClientData>> m_Clients;
 
 static janus_callbacks* m_Callbacks = nullptr;
 
@@ -68,8 +69,8 @@ int plugin_init(janus_callbacks* callback, const char* /*config_path*/)
             [](const uint8_t* rtp_data, int rtp_bytes)
         {
             for (auto& client : m_Clients) {
-                if (client.transmit) {
-                    m_Callbacks->relay_rtp(client.handle, 1, (char*)rtp_data, rtp_bytes);
+                if (client->transmit) {
+                    m_Callbacks->relay_rtp(client->handle, 1, (char*)rtp_data, rtp_bytes);
                 }
             }
         });
@@ -144,8 +145,9 @@ void plugin_create_session(janus_plugin_session* handle, int* /*error*/)
 {
     std::lock_guard<std::mutex> locker(m_Lock);
 
-    ClientData data;
-    data.handle = handle;
+    auto data = std::make_shared<ClientData>();
+    data->handle = handle;
+    data->Transport.Keyboard = &m_Keyboard;
 
     m_Clients.push_back(data);
 }
@@ -293,9 +295,9 @@ void plugin_setup_media(janus_plugin_session* handle)
     std::lock_guard<std::mutex> locker(m_Lock);
 
     for (size_t i = 0; i < m_Clients.size(); ++i) {
-        if (m_Clients[i].handle == handle) {
+        if (m_Clients[i]->handle == handle) {
             Logger.Info("plugin_setup_media: Session unmuted");
-            m_Clients[i].transmit = true;
+            m_Clients[i]->transmit = true;
             return;
         }
     }
@@ -329,10 +331,37 @@ void plugin_incoming_rtcp(janus_plugin_session* /*handle*/, int /*video*/, char*
     * @param[in] handle The plugin/gateway session used for this peer
     * @param[in] buf The message data (buffer)
     * @param[in] len The buffer lenght */
-void plugin_incoming_data(janus_plugin_session* /*handle*/, char* buf, int len)
+void plugin_incoming_data(janus_plugin_session* handle, char* buf, int len)
 {
-    if (!m_Keyboard.ParseReports((const uint8_t*)buf, len)) {
-        Logger.Error("m_Keyboard.ParseReports failed for len=", len);
+    if (len <= 1) {
+        return;
+    }
+
+    std::shared_ptr<ClientData> client_data;
+
+    // Find the client with lock held
+    {
+        std::lock_guard<std::mutex> locker(m_Lock);
+
+        for (size_t i = 0; i < m_Clients.size(); ++i) {
+            if (m_Clients[i]->handle == handle) {
+                client_data = m_Clients[i];
+                break;
+            }
+        }
+    }
+
+    if (!client_data) {
+        Logger.Warn("Unable to find handle associated client context");
+        return;
+    }
+
+    // Convert JS string to byte array
+    std::vector<uint8_t> data;
+    Invert_convertUint8ArrayToBinaryString(buf, len, data);
+
+    if (!client_data->Transport.ParseReports(data.data(), (int)data.size())) {
+        Logger.Error("ParseReports failed for len=", len, ": ", HexDump(data.data(), (int)data.size()));
     }
 }
 
@@ -364,9 +393,9 @@ void plugin_hangup_media(janus_plugin_session* handle)
     std::lock_guard<std::mutex> locker(m_Lock);
 
     for (size_t i = 0; i < m_Clients.size(); ++i) {
-        if (m_Clients[i].handle == handle) {
+        if (m_Clients[i]->handle == handle) {
             Logger.Info("plugin_hangup_media: Session muted");
-            m_Clients[i].transmit = false;
+            m_Clients[i]->transmit = false;
             return;
         }
     }
@@ -381,7 +410,7 @@ void plugin_destroy_session(janus_plugin_session* handle, int* /*error*/)
     std::lock_guard<std::mutex> locker(m_Lock);
 
     for (size_t i = 0; i < m_Clients.size(); ++i) {
-        if (m_Clients[i].handle == handle) {
+        if (m_Clients[i]->handle == handle) {
             Logger.Info("plugin_destroy_session: Session removed");
             m_Clients[i] = m_Clients[m_Clients.size() - 1];
             m_Clients.resize(m_Clients.size() - 1);
