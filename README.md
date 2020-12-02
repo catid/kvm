@@ -46,6 +46,8 @@ Required hardware:
 * HDMI Cable (3.3 Feet): https://www.amazon.com/dp/B07FFS7RH1/
 * USB-C to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01GGKYS6E/
 
+![Hardware Setup](https://github.com/catid/kvm/raw/master/art/hw_setup.jpg "Hardware Setup") 
+
 Recommended additional hardware:
 
 The TinyPilot project has built a power/data splitter that is super useful when working with target devices that cannot supply full power to the Raspberry Pi.  This splitter requires two additional Micro USB cables.
