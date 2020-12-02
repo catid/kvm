@@ -17,6 +17,21 @@ Features:
 * Robust to replugging HDMI capture card while in use.
 
 
+## Quick Setup
+
+`Hardware Required`: Connect all the hardware.
+
+`OS Installation`: Set up the Raspberry Pi with SSH and WiFi access.
+
+`Windows Setup`: Prepare the Windows computer to access the Raspberry Pi by hostname, and install a terminal app.
+
+`Software Installation`: Clone this repo, build the software, and run the install script as root.
+
+`Hardware Setup`: Connect the Pi to a target device.
+
+Navigate to https://raspberrypi.local/ to access the KVM web app.
+
+
 ## Hardware Required
 
 Amazon List (Containing these items): https://www.amazon.com/hz/wishlist/ls/25IKRAT6M9NGW
@@ -59,7 +74,7 @@ These modifications will enable SSH over WiFi for the Raspberry Pi without needi
 This software currently requires that most of the system settings are the defaults, so avoiding unnecessary customization is recommended (at first).  For example the user name should be `pi` which is the default.
 
 
-## Windows mDNS Installation
+## Windows Setup
 
 On Windows you will need to install the Bonjour Print Services for Windows to resolve the hostname `raspberrypi.local`:
 
@@ -83,24 +98,21 @@ Build and install the KVM software in the SSH session:
 cd ~
 git clone git@github.com:catid/kvm.git
 cd kvm
+
 sudo apt install janus janus-dev cmake g++ libglib2.0-dev
+
 sudo systemctl disable janus
+
 mkdir build
 cd build
 cmake ..
 make -j4
-```
 
-Install the KVM software:
-
-```
 cd /home/pi/kvm/scripts/
 sudo ./install.sh
 ```
 
 Reboot the Raspberry Pi.
-
-Navigate to https://raspberrypi.local/ to access the KVM.
 
 
 ## Hardware Setup
@@ -110,6 +122,8 @@ Insert the HDMI/USB Capture Card into one of the two Blue Middle USB3 ports on t
 Insert the USB-C to USB-A Adapter Cable into the USB-C port on the Raspberry Pi 4.  Connect the USB-A cable to the target device.
 
 Power on the target device.
+
+Navigate to https://raspberrypi.local/ to access the KVM web app.
 
 
 ## Credits

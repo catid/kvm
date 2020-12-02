@@ -51,12 +51,8 @@ const kRightShift = 1 << 5;
 const kRightAlt = 1 << 6;
 const kRightSuper = 1 << 7;
 
-// https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
-// See: Page 53 Section 10 Keyboard/Keypad Page (0x07)
-
-// USB keyboard modifier codes:
+// https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf#page=53
 // https://wiki.osdev.org/USB_Human_Interface_Devices
-
 // http://www.javascriptkeycode.com/
 // https://www.asciitable.com/
 // https://api.jquery.com/keyup/
@@ -323,6 +319,7 @@ function addReportWithKeysDown(modifier_keys) {
             }
         }
     }
+    // Note: Bitfield flags for modifier keys should be retained or e.g. ALT key will not activate menus.
 
     var count = keys.length;
     if (count > 6) {

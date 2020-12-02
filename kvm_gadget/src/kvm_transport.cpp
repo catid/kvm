@@ -34,16 +34,13 @@ void Invert_convertUint8ArrayToBinaryString(
         }
     }
 
-    // If it is not an even multiple of 8:
-    if (len % 8 != 0) {
-        // Handle last few missing bits
-        const uint8_t x = buf[len - 1];
+    // Handle last few missing bits
+    const uint8_t x = buf[len - 1];
 
-        const int partial_count = (len % 8) - 1;
+    const int partial_count = (len - 1) % 8;
 
-        for (int j = 0; j < partial_count; ++j) {
-            data[output_count - partial_count + j] |= (x << (7 - j)) & 0x80;
-        }
+    for (int j = 0; j < partial_count; ++j) {
+        data[output_count - partial_count + j] |= (x << (7 - j)) & 0x80;
     }
 
     data.resize(output_count);
