@@ -17,7 +17,7 @@ Features:
 * Robust to replugging HDMI capture card while in use.
 
 
-## Quick Setup
+## Overview
 
 `Hardware Required`: Connect all the hardware.
 
