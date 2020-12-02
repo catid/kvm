@@ -13,15 +13,15 @@ Features:
 
 ## Overview
 
-`Hardware Required`: Connect all the hardware.
+[Hardware Required](#hardware-required): Connect all the hardware.
 
-`OS Installation`: Set up the Raspberry Pi with SSH and WiFi access.
+[OS Installation](#os-installation): Set up the Raspberry Pi with SSH and WiFi access.
 
-`Windows Setup`: Prepare the Windows computer to access the Raspberry Pi by hostname, and install a terminal app.
+[Windows Setup](#windows-setup): Prepare the Windows computer to access the Raspberry Pi by hostname, and install a terminal app.
 
-`Software Installation`: Clone this repo, build the software, and run the install script as root.
+[Software Installation](#software-installation): Clone this repo, build the software, and run the install script as root.
 
-`Hardware Setup`: Connect the Pi to a target device.
+[How To Use](#how-to-use): Connect the Pi to a target device.
 
 Navigate to https://kvm.local/ to access the KVM web app.
 
@@ -117,7 +117,7 @@ sudo reboot now
 When the Raspberry Pi reboots, it will be hosting the KVM services.  You can view the logs by connecting to `ssh pi@kvm.local` with password `raspberry`, and then entering `sudo journalctl -fu kvm_webrtc -n 10000`
 
 
-## Hardware Setup
+## How To Use
 
 Insert the HDMI/USB Capture Card into one of the two Blue Middle USB3 ports on the Raspberry Pi 4.  Connect the HDMI cable to the target device.
 
@@ -126,6 +126,13 @@ Insert the USB-C to USB-A Adapter Cable into the USB-C port on the Raspberry Pi 
 Power on the target device.
 
 Navigate to https://kvm.local/ to access the KVM web app.
+
+
+## Future Work
+
+* Provide SD card image for quicker setup.
+* Improve the on-screen keyboard and web interface for the web app.
+* 
 
 
 ## Credits
