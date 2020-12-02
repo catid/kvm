@@ -43,8 +43,8 @@ Required hardware:
 * SD Card: https://www.amazon.com/dp/B073JYC4XM/
 * SD Card Reader: https://www.amazon.com/dp/B006T9B6R2/
 * HDMI/USB Capture Card: https://www.amazon.com/dp/B088D3QPN5/
-* HDMI Cable (3.3 Feet): https://www.amazon.com/dp/B07FFS7RH1/
-* USB-C to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01GGKYS6E/
+* HDMI Cable (3.3 Feet, or shorter): https://www.amazon.com/dp/B07FFS7RH1/
+* USB-C to USB-A Adapter Cable (3 Feet, or shorter): https://www.amazon.com/dp/B01GGKYS6E/
 
 ![Hardware Setup](https://github.com/catid/kvm/raw/master/art/hw_setup.jpg "Hardware Setup") 
 
@@ -53,7 +53,7 @@ Recommended additional hardware:
 The TinyPilot project has built a power/data splitter that is super useful when working with target devices that cannot supply full power to the Raspberry Pi.  This splitter requires two additional Micro USB cables.
 
 * Power/Data Splitter: https://tinypilotkvm.com/product/tinypilot-power-connector
-* 2x Micro USB to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01JPDTZXK
+* 2x Micro USB to USB-A Adapter Cable (3 Feet, or shorter): https://www.amazon.com/dp/B01JPDTZXK
 
 
 ## OS Installation
