@@ -1,6 +1,6 @@
 # ![Logo](https://github.com/catid/kvm/raw/master/art/logo_44.png "Logo") IP KVM / IoT Crash Cart Adapter using Raspberry Pi 4
 
-By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target device remotely, as if you were sitting at the computer with a keyboard and mouse attached to it.  You will be able to access the BIOS and boot menus of the device remotely.
+By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target remotely, as if you were sitting at the target with a keyboard and mouse attached.  You will be able to access the BIOS and boot menus of the device remotely.
 
 Features:
 
