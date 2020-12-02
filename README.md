@@ -48,6 +48,8 @@ Required hardware:
 
 ![Hardware Setup](https://github.com/catid/kvm/raw/master/art/hw_setup.jpg "Hardware Setup") 
 
+The software is compatible with this fanless heatsink case and will not cause it to overheat.
+
 Recommended additional hardware:
 
 The TinyPilot project has built a power/data splitter that is super useful when working with target devices that cannot supply full power to the Raspberry Pi.  This splitter requires two additional Micro USB cables.
