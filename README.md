@@ -131,18 +131,13 @@ Power on the target device.
 Navigate to https://kvm.local/ to access the KVM web app.
 
 
-## Future Work
-
-* Provide SD card image for quicker setup.
-* Improve the on-screen keyboard and web interface for the web app.
-* Provide file transfer to target from browser via emulated USB storage device.
-
-
 ## Credits
+
+The most complete Pi KVM project is probably https://github.com/pikvm/pikvm/ which has a lot of additional features, such as supporting other video capture hardware and other versions of the Raspberry Pi.  The Pi KVM project has a wealth of information in the repo and has been in development for years.
 
 The keyboard/mouse driver setup script is copied from the (MIT Licensed) TinyPilot software project at https://tinypilotkvm.com/
 
-The author of TinyPilot is pushing towards commercializing using the Raspberry Pi for KVM.  I did not personally decide to commercialize this hardware solution because multiple products for IP-KVM already exist.  It does seem to be producing a decent income for the author of TinyPilot, which is interesting.
+The author of TinyPilot is pushing towards commercializing using the Raspberry Pi for KVM.  I did not personally decide to commercialize this hardware solution because multiple products for IP-KVM already exist.  It does seem to be producing a decent income for the author of TinyPilot despite the competition, which is interesting.
 
 Software by Christopher A. Taylor mrcatid@gmail.com
 

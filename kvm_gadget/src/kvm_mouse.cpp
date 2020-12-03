@@ -51,7 +51,7 @@ bool MouseEmulator::SendReport(uint8_t button_status, int16_t x, int16_t y)
     Logger.Info("Writing report: ", HexDump((const uint8_t*)buffer, 5));
 
     ssize_t written = write(fd, buffer, 5);
-    if (written != 5) {
+    if (written != 7) {
         Logger.Error("Failed to write mouse device: errno=", errno);
         return false;
     }

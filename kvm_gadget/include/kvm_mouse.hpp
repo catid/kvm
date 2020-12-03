@@ -7,6 +7,7 @@
 
     References:
     [1] https://wiki.osdev.org/USB_Human_Interface_Devices
+    [2] http://embeddedguruji.blogspot.com/2019/04/learning-usb-hid-in-linux-part-6.html
 */
 
 #pragma once
