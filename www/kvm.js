@@ -350,43 +350,44 @@ function sendReports() {
     }
 }
 
+function pressKey(data) {
+    // If key is already down:
+    if (KeysDown.find(code => code == data[1])) {
+        return;
+    }
+
+    // Add key
+    KeysDown.push(data[1]);
+
+    addReportWithKeysDown(data[0]);
+    sendReports();
+}
+function releaseKey(data) {
+    // If key is already up:
+    if (!KeysDown.find(code => code == data[1])) {
+        return;
+    }
+
+    // Remove code from KeysDown array
+    for (var i = 0; i < KeysDown.length; i++) {
+        if (KeysDown[i] === data[1]) {
+            KeysDown.splice(i, 1);
+            break;
+        }
+    }
+
+    addReportWithKeysDown(data[0]);
+    sendReports();
+}
+
 function startCapture() {
     $(document).keydown(function(event){
         event.preventDefault();
-
-        var data = convertKey(event);
-
-        // If key is already down:
-        if (KeysDown.find(code => code == data[1])) {
-            return;
-        }
-
-        // Add key
-        KeysDown.push(data[1]);
-
-        addReportWithKeysDown(data[0]);
-        sendReports();
+        pressKey(convertKey(event));
     });
     $(document).keyup(function(event){
         event.preventDefault();
-
-        var data = convertKey(event);
-
-        // If key is already up:
-        if (!KeysDown.find(code => code == data[1])) {
-            return;
-        }
-
-        // Remove code from KeysDown array
-        for (var i = 0; i < KeysDown.length; i++) {
-            if (KeysDown[i] === data[1]) {
-                KeysDown.splice(i, 1);
-                break;
-            }
-        }
-
-        addReportWithKeysDown(data[0]);
-        sendReports();
+        releaseKey(convertKey(event));
     });
 
     $(document).mouseup(function(event){
@@ -405,6 +406,20 @@ function startCapture() {
     $(document).contextmenu(function(event){
         // Disable right-click (causes video to show properties menu)
         event.preventDefault();
+    });
+
+    $("#af4_key").click(function(event){
+        // Scan codes from https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf#page=53
+        pressKey([kLeftAlt, 61]);
+        releaseKey([0, 61]);
+    });
+    $("#cad_key").click(function(event){
+        pressKey([kLeftAlt|kLeftCtrl, 76]);
+        releaseKey([0, 76]);
+    });
+    $("#super_key").click(function(event){
+        pressKey([kLeftSuper, 227]);
+        releaseKey([0, 227]);
     });
 
     // Send reports every 60 milliseconds -> ~500 bytes/second.
