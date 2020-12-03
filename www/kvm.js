@@ -1,3 +1,5 @@
+// Copyright 2020 Christopher A. Taylor
+
 // Select HTTPS backend if HTTPS is used for front-end
 var server = null;
 if(window.location.protocol === 'http:') {

@@ -7,7 +7,7 @@ StartLimitIntervalSec=10
 [Service]
 Type=simple
 ExecStart=python3 start_http.py
-WorkingDirectory=/home/pi/kvm/scripts/
+WorkingDirectory=/home/pi/kvm/www/
 StandardOutput=syslog
 StandardError=syslog
 Restart=always
