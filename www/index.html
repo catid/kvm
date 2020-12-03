@@ -12,6 +12,10 @@
 </head>
 <body>
 
+<div id="video-container">
+    <video class="rounded centered hide" id="remotevideo" autoplay playsinline muted/>
+</div>
+
 <div id="status-container">
     <span id="status-container">
         Status: <span class="status" id="status-text"></span>
@@ -26,7 +30,11 @@
     </span>
 </div>
 
-<video class="rounded centered hide" id="remotevideo" autoplay playsinline muted/>
+<div id="controls-container">
+    <button id="af4_key" type="button">ALT+F4</button>
+    <button id="cad_key" type="button">CTRL+ALT+DEL</button>
+    <button id="super_key" type="button">Super (Windows) Key</button>
+</div>
 
 </body>
 </html>

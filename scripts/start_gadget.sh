@@ -109,21 +109,11 @@ echo -ne \\x26\\xFF\\x7F >> "$D" #   LOGICAL_MAXIMUM (32767)
 echo -ne \\x75\\x10 >> "$D"      #   REPORT_SIZE (16)
 echo -ne \\x95\\x02 >> "$D"      #   REPORT_COUNT (2)
 echo -ne \\x81\\x02 >> "$D"      #   INPUT (Data,Var,Abs)
-                                 #   vertical wheel
-echo -ne \\x09\\x38 >> "$D"      #   USAGE (wheel)
-echo -ne \\x15\\x81 >> "$D"      #   LOGICAL_MINIMUM (-127)
-echo -ne \\x25\\x7F >> "$D"      #   LOGICAL_MAXIMUM (127)
-echo -ne \\x75\\x08 >> "$D"      #   REPORT_SIZE (8)
-echo -ne \\x95\\x01 >> "$D"      #   REPORT_COUNT (1)
-echo -ne \\x81\\x06 >> "$D"      #   INPUT (Data,Var,Rel)
-                                 #   horizontal wheel
-echo -ne \\x05\\x0C >> "$D"      #   USAGE_PAGE (Consumer Devices)
-echo -ne \\x0A\\x38\\x02 >> "$D" #   USAGE (AC Pan)
-echo -ne \\x15\\x81 >> "$D"      #   LOGICAL_MINIMUM (-127)
-echo -ne \\x25\\x7F >> "$D"      #   LOGICAL_MAXIMUM (127)
-echo -ne \\x75\\x08 >> "$D"      #   REPORT_SIZE (8)
-echo -ne \\x95\\x01 >> "$D"      #   REPORT_COUNT (1)
-echo -ne \\x81\\x06 >> "$D"      #   INPUT (Data,Var,Rel)
+
+# Note: This only supports absolute mode for mouse position between 0..32767 pixels.
+# According to Pi KVM project some PCs do not support absolute mode, but it does
+# seem like something to add later as needed.
+
 echo -ne \\xC0 >> "$D"           # END_COLLECTION
 cp "$D" "${MOUSE_FUNCTIONS_DIR}/report_desc"
 

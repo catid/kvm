@@ -4,10 +4,13 @@ Provides secure [out-of-band](https://en.wikipedia.org/wiki/Out-of-band_manageme
 
 By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target remotely, as if you were sitting at the target with a keyboard and mouse attached.  You will be able to access the BIOS and boot menus of the device remotely.
 
+[Project Video](https://www.youtube.com/watch?v=X4b9830Ifjo)
+
 Features:
 
 * The browser displays video from the target device.
 * Keystrokes and mouse movements are relayed to the target device.
+* Supports multiple sessions with the device in different browser windows.
 * All data sent over the network is encrypted using TLS.
 * Robust to replugging HDMI capture card while in use.
 * CBR H.264 WebRTC video and data channels are used to ensure consistently low latency.
@@ -131,18 +134,13 @@ Power on the target device.
 Navigate to https://kvm.local/ to access the KVM web app.
 
 
-## Future Work
-
-* Provide SD card image for quicker setup.
-* Improve the on-screen keyboard and web interface for the web app.
-* Provide file transfer to target from browser via emulated USB storage device.
-
-
 ## Credits
+
+The most complete Pi KVM project is probably https://github.com/pikvm/pikvm/ which has a lot of additional features, such as supporting other video capture hardware and other versions of the Raspberry Pi.  The Pi KVM project has a wealth of information in the repo and has been in development for years.
 
 The keyboard/mouse driver setup script is copied from the (MIT Licensed) TinyPilot software project at https://tinypilotkvm.com/
 
-The author of TinyPilot is pushing towards commercializing using the Raspberry Pi for KVM.  I did not personally decide to commercialize this hardware solution because multiple products for IP-KVM already exist.  It does seem to be producing a decent income for the author of TinyPilot, which is interesting.
+The author of TinyPilot is pushing towards commercializing using the Raspberry Pi for KVM.  I did not personally decide to commercialize this hardware solution because multiple products for IP-KVM already exist.  It does seem to be producing a decent income for the author of TinyPilot despite the competition, which is interesting.
 
 Software by Christopher A. Taylor mrcatid@gmail.com
 

@@ -10,8 +10,8 @@
     for a single key down event.
 
     References:
-    [1] http://kbdlayout.info/kbdusx/scancodes
-    [2] https://wiki.osdev.org/USB_Human_Interface_Devices
+    [1] https://wiki.osdev.org/USB_Human_Interface_Devices
+    [2] https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf#page=53
 */
 
 #pragma once
@@ -41,6 +41,9 @@ public:
         Send a USB HID keyboard report.
 
         This is thread-safe.
+
+        Modifier keys bits described in [1].
+        Key presses are scan codes from [2].
     */
     bool SendReport(uint8_t modifier_keys, const uint8_t* keypresses, int keypress_count);
 

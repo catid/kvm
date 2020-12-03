@@ -38,7 +38,7 @@ void MouseEmulator::Shutdown()
     }
 }
 
-bool MouseEmulator::SendReport(uint8_t button_status, int16_t x, int16_t y)
+bool MouseEmulator::SendReport(uint8_t button_status, uint16_t x, uint16_t y)
 {
     std::lock_guard<std::mutex> locker(Lock);
 
@@ -47,6 +47,8 @@ bool MouseEmulator::SendReport(uint8_t button_status, int16_t x, int16_t y)
     buffer[0] = button_status;
     WriteU16_LE(buffer + 1, x);
     WriteU16_LE(buffer + 3, y);
+
+    //Logger.Info("Writing report: ", HexDump((const uint8_t*)buffer, 5));
 
     ssize_t written = write(fd, buffer, 5);
     if (written != 5) {
