@@ -1,7 +1,7 @@
 // Copyright 2020 Christopher A. Taylor
 
 /*
-    USB Gadget API
+    USB Keyboard Emulation
 
     For keyboard input, it makes the most sense for us to have the Javascript
     code track the currently pressed keys and convert to keyboard scan codes.

@@ -12,9 +12,10 @@ Features:
 
 * The browser displays video from the target device.
 * Keystrokes and mouse movements are relayed to the target device.
-* WebRTC video and data channels are used to ensure low-latency.
 * All data sent over the network is encrypted using TLS.
 * Robust to replugging HDMI capture card while in use.
+* CBR H.264 WebRTC video and data channels are used to ensure consistently low latency.
+* Motion (click/key) to photons (video update in browser) latency: 200 milliseconds.
 
 
 ## Overview
