@@ -4,7 +4,7 @@
 #include "kvm_logger.hpp"
 using namespace kvm;
 
-static logger::Channel Logger("KeyboardTest");
+static logger::Channel Logger("MouseTest");
 
 int main(int argc, char* argv[])
 {
@@ -13,22 +13,22 @@ int main(int argc, char* argv[])
     CORE_UNUSED(argc);
     CORE_UNUSED(argv);
 
-    Logger.Info("kvm_keyboard_test");
+    Logger.Info("kvm_mouse_test");
 
-    KeyboardEmulator keyboard;
+    MouseEmulator mouse;
 
-    if (!keyboard.Initialize()) {
-        Logger.Error("Keyboard initialization failed");
+    if (!mouse.Initialize()) {
+        Logger.Error("Mouse initialization failed");
         return kAppFail;
     }
 
     InputTransport transport;
-    transport.Keyboard = &keyboard;
+    transport.Mouse = &mouse;
 
-    // Press "A" key and release
+    // Left Click and release
     uint8_t reports[7] = {
-        0x01, 0x02, 0x00, 0x04,
-        0x02, 0x01, 0x00,
+        0x01, 0x82, 0x01, 0x00, 0x00, 0x00, 0x00,
+        0x02, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
     if (!transport.ParseReports(reports, 7)) {

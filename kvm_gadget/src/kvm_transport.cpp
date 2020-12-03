@@ -2,6 +2,7 @@
 
 #include "kvm_transport.hpp"
 #include "kvm_logger.hpp"
+#include "kvm_serializer.hpp"
 
 namespace kvm {
 
@@ -70,10 +71,13 @@ bool InputTransport::ParseReports(const uint8_t* data, int bytes)
 
             // If this is a mouse:
             if (is_mouse) {
-                // FIXME
+                if (count >= 5) {
+                    success &= Mouse->SendReport(data[2], ReadU16_LE(data + 3), ReadU16_LE(data + 5));
+                }
             } else { // keyboard:
-                // Send contained report
-                success &= Keyboard->SendReport(data[2], data + 3, count - 1);
+                if (count >= 1) {
+                    success &= Keyboard->SendReport(data[2], data + 3, count - 1);
+                }
             }
         }
 

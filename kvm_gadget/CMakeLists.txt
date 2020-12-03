@@ -45,3 +45,11 @@ target_link_libraries(kvm_keyboard_test
     kvm_gadget
 )
 install(TARGETS kvm_keyboard_test DESTINATION bin)
+
+# kvm_mouse_test application
+
+add_executable(kvm_mouse_test test/kvm_mouse_test.cpp)
+target_link_libraries(kvm_mouse_test
+    kvm_gadget
+)
+install(TARGETS kvm_mouse_test DESTINATION bin)

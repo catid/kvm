@@ -28,6 +28,7 @@ static logger::Channel Logger("plugin");
 
 static VideoPipeline m_Pipeline;
 static KeyboardEmulator m_Keyboard;
+static MouseEmulator m_Mouse;
 
 struct ClientData
 {
@@ -79,6 +80,9 @@ int plugin_init(janus_callbacks* callback, const char* /*config_path*/)
     if (!m_Keyboard.Initialize()) {
         Logger.Error("Failed to initialize the keyboard emulation");
     }
+    if (!m_Mouse.Initialize()) {
+        Logger.Error("Failed to initialize the mouse emulation");
+    }
 
     return 0;
 }
@@ -89,6 +93,7 @@ void plugin_destroy(void)
     m_WorkerNode.Shutdown();
     m_Pipeline.Shutdown();
     m_Keyboard.Shutdown();
+    m_Mouse.Shutdown();
 }
 
 /*! \brief Informative method to request the API version this plugin was compiled against
@@ -148,6 +153,7 @@ void plugin_create_session(janus_plugin_session* handle, int* /*error*/)
     auto data = std::make_shared<ClientData>();
     data->handle = handle;
     data->Transport.Keyboard = &m_Keyboard;
+    data->Transport.Mouse = &m_Mouse;
 
     m_Clients.push_back(data);
 }

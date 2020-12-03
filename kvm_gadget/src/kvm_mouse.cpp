@@ -1,6 +1,7 @@
 // Copyright 2020 Christopher A. Taylor
 
 #include "kvm_mouse.hpp"
+#include "kvm_serializer.hpp"
 #include "kvm_logger.hpp"
 
 #include <sys/types.h>
@@ -41,18 +42,14 @@ bool MouseEmulator::SendReport(uint8_t button_status, int16_t x, int16_t y)
 {
     std::lock_guard<std::mutex> locker(Lock);
 
-    char buffer[8] = {0};
+    char buffer[5] = {0};
 
-    buffer[0] = modifier_keys;
+    buffer[0] = button_status;
+    WriteU16_LE(buffer + 1, x);
+    WriteU16_LE(buffer + 3, y);
 
-    for (int i = 0; i < keypress_count && i < 6; ++i) {
-        buffer[2 + i] = keypresses[i];
-    }
-
-    //Logger.Info("SendReport: ", HexDump((const uint8_t*)buffer, 8));
-
-    ssize_t written = write(fd, buffer, 8);
-    if (written != 8) {
+    ssize_t written = write(fd, buffer, 5);
+    if (written != 5) {
         Logger.Error("Failed to write mouse device: errno=", errno);
         return false;
     }
