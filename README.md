@@ -1,12 +1,8 @@
-# ![Logo](https://github.com/catid/kvm/raw/master/art/logo_44.png "Logo") IP KVM / IoT Crash Cart Adapter using Raspberry Pi
+# ![Logo](https://github.com/catid/kvm/raw/master/art/logo_44.png "Logo") IP KVM / IoT Crash Cart Adapter using Raspberry Pi 4
 
-## Summary
+Provides secure [out-of-band](https://en.wikipedia.org/wiki/Out-of-band_management) remote management of IT assets.
 
-This software runs on a Raspberry Pi 4 with an HDMI/USB adapter attached.
-
-The USB-C port is configured so that the Pi acts as a keyboard/mouse emulator.
-
-By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target device remotely, as if you were sitting at the computer with a keyboard and mouse attached to it.  You will be able to access the BIOS and boot menus of the device remotely.
+By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target remotely, as if you were sitting at the target with a keyboard and mouse attached.  You will be able to access the BIOS and boot menus of the device remotely.
 
 Features:
 
@@ -20,15 +16,15 @@ Features:
 
 ## Overview
 
-`Hardware Required`: Connect all the hardware.
+[Hardware Required](#hardware-required): Connect all the hardware.
 
-`OS Installation`: Set up the Raspberry Pi with SSH and WiFi access.
+[OS Installation](#os-installation): Set up the Raspberry Pi with SSH and WiFi access.
 
-`Windows Setup`: Prepare the Windows computer to access the Raspberry Pi by hostname, and install a terminal app.
+[Windows Setup](#windows-setup): Prepare the Windows computer to access the Raspberry Pi by hostname, and install a terminal app.
 
-`Software Installation`: Clone this repo, build the software, and run the install script as root.
+[Software Installation](#software-installation): Clone this repo, build the software, and run the install script as root.
 
-`Hardware Setup`: Connect the Pi to a target device.
+[How To Use](#how-to-use): Connect the Pi to a target device.
 
 Navigate to https://kvm.local/ to access the KVM web app.
 
@@ -44,17 +40,19 @@ Required hardware:
 * SD Card: https://www.amazon.com/dp/B073JYC4XM/
 * SD Card Reader: https://www.amazon.com/dp/B006T9B6R2/
 * HDMI/USB Capture Card: https://www.amazon.com/dp/B088D3QPN5/
-* HDMI Cable (3.3 Feet): https://www.amazon.com/dp/B07FFS7RH1/
-* USB-C to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01GGKYS6E/
+* HDMI Cable (3.3 Feet, or shorter): https://www.amazon.com/dp/B07FFS7RH1/
+* USB-C to USB-A Adapter Cable (3 Feet, or shorter): https://www.amazon.com/dp/B01GGKYS6E/
 
 ![Hardware Setup](https://github.com/catid/kvm/raw/master/art/hw_setup.jpg "Hardware Setup") 
+
+The software is compatible with this fanless heatsink case and will not cause it to overheat.
 
 Recommended additional hardware:
 
 The TinyPilot project has built a power/data splitter that is super useful when working with target devices that cannot supply full power to the Raspberry Pi.  This splitter requires two additional Micro USB cables.
 
 * Power/Data Splitter: https://tinypilotkvm.com/product/tinypilot-power-connector
-* 2x Micro USB to USB-A Adapter Cable (3 Feet): https://www.amazon.com/dp/B01JPDTZXK
+* 2x Micro USB to USB-A Adapter Cable (3 Feet, or shorter): https://www.amazon.com/dp/B01JPDTZXK
 
 
 ## OS Installation
@@ -122,7 +120,7 @@ sudo reboot now
 When the Raspberry Pi reboots, it will be hosting the KVM services.  You can view the logs by connecting to `ssh pi@kvm.local` with password `raspberry`, and then entering `sudo journalctl -fu kvm_webrtc -n 10000`
 
 
-## Hardware Setup
+## How To Use
 
 Insert the HDMI/USB Capture Card into one of the two Blue Middle USB3 ports on the Raspberry Pi 4.  Connect the HDMI cable to the target device.
 
@@ -131,6 +129,13 @@ Insert the USB-C to USB-A Adapter Cable into the USB-C port on the Raspberry Pi 
 Power on the target device.
 
 Navigate to https://kvm.local/ to access the KVM web app.
+
+
+## Future Work
+
+* Provide SD card image for quicker setup.
+* Improve the on-screen keyboard and web interface for the web app.
+* Provide file transfer to target from browser via emulated USB storage device.
 
 
 ## Credits
