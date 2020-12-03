@@ -26,12 +26,12 @@ int main(int argc, char* argv[])
     transport.Mouse = &mouse;
 
     // Left Click and release
-    uint8_t reports[7] = {
+    uint8_t reports[14] = {
         0x01, 0x82, 0x01, 0x00, 0x00, 0x00, 0x00,
         0x02, 0x81, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
-    if (!transport.ParseReports(reports, 7)) {
+    if (!transport.ParseReports(reports, 14)) {
         Logger.Error("ParseReports failed");
         return kAppFail;
     }
