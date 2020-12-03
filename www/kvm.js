@@ -389,6 +389,24 @@ function startCapture() {
         sendReports();
     });
 
+    $(document).mouseup(function(event){
+        event.preventDefault();
+    });
+    $(document).mousedown(function(event){
+        event.preventDefault();
+    });
+    $(document).mouseover(function(event){
+        event.preventDefault();
+    });
+    $(document).click(function(event){
+        // Disable left click
+        event.preventDefault();
+    });
+    $(document).contextmenu(function(event){
+        // Disable right-click (causes video to show properties menu)
+        event.preventDefault();
+    });
+
     // Send reports every 60 milliseconds -> ~500 bytes/second.
     // This is done to fill in for lost packets.
     SendTimer = setInterval(function() {

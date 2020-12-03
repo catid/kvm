@@ -7,6 +7,7 @@ project(kvm_gadget LANGUAGES CXX)
 
 set(INCLUDE_FILES
     include/kvm_keyboard.hpp
+    include/kvm_mouse.hpp
     include/kvm_transport.hpp
     include/Counter.h
 )
@@ -14,6 +15,7 @@ set(INCLUDE_FILES
 set(SOURCE_FILES
     ${INCLUDE_FILES}
     src/kvm_keyboard.cpp
+    src/kvm_mouse.cpp
     src/kvm_transport.cpp
 )
 

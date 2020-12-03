@@ -3,7 +3,7 @@
 /*
     USB Mouse Emulation
 
-    
+    Mouse motion described by the USB HID reports is all relative.
 
     References:
     [1] https://wiki.osdev.org/USB_Human_Interface_Devices
@@ -19,12 +19,12 @@ namespace kvm {
 
 
 //------------------------------------------------------------------------------
-// KeyboardEmulator
+// MouseEmulator
 
-class KeyboardEmulator
+class MouseEmulator
 {
 public:
-    ~KeyboardEmulator()
+    ~MouseEmulator()
     {
         Shutdown();
     }
@@ -33,11 +33,11 @@ public:
     void Shutdown();
 
     /*
-        Send a USB HID keyboard report.
+        Send a USB HID mouse report.
 
         This is thread-safe.
     */
-    bool SendReport(uint8_t modifier_keys, const uint8_t* keypresses, int keypress_count);
+    bool SendReport(uint8_t button_status, int16_t x, int16_t y);
 
 protected:
     int fd = -1;

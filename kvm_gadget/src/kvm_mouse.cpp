@@ -1,6 +1,6 @@
 // Copyright 2020 Christopher A. Taylor
 
-#include "kvm_keyboard.hpp"
+#include "kvm_mouse.hpp"
 #include "kvm_logger.hpp"
 
 #include <sys/types.h>
@@ -15,21 +15,21 @@ static logger::Channel Logger("Gadget");
 
 
 //------------------------------------------------------------------------------
-// KeyboardEmulator
+// MouseEmulator
 
-bool KeyboardEmulator::Initialize()
+bool MouseEmulator::Initialize()
 {
-    fd = open("/dev/hidg0", O_RDWR);
+    fd = open("/dev/hidg1", O_RDWR);
     if (fd < 0) {
-        Logger.Error("Failed to open keyboard emulator device");
+        Logger.Error("Failed to open mouse emulator device");
         return false;
     }
 
-    Logger.Info("Keyboard emulator ready");
+    Logger.Info("Mouse emulator ready");
     return true;
 }
 
-void KeyboardEmulator::Shutdown()
+void MouseEmulator::Shutdown()
 {
     if (fd >= 0) {
         close(fd);
@@ -37,7 +37,7 @@ void KeyboardEmulator::Shutdown()
     }
 }
 
-bool KeyboardEmulator::SendReport(uint8_t modifier_keys, const uint8_t* keypresses, int keypress_count)
+bool MouseEmulator::SendReport(uint8_t button_status, int16_t x, int16_t y)
 {
     std::lock_guard<std::mutex> locker(Lock);
 
@@ -53,7 +53,7 @@ bool KeyboardEmulator::SendReport(uint8_t modifier_keys, const uint8_t* keypress
 
     ssize_t written = write(fd, buffer, 8);
     if (written != 8) {
-        Logger.Error("Failed to write keyboard device: errno=", errno);
+        Logger.Error("Failed to write mouse device: errno=", errno);
         return false;
     }
 
