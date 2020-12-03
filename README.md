@@ -8,6 +8,7 @@ Features:
 
 * The browser displays video from the target device.
 * Keystrokes and mouse movements are relayed to the target device.
+* Supports multiple sessions with the device in different browser windows.
 * All data sent over the network is encrypted using TLS.
 * Robust to replugging HDMI capture card while in use.
 * CBR H.264 WebRTC video and data channels are used to ensure consistently low latency.
