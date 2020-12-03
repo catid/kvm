@@ -257,6 +257,13 @@ function convertUint8ArrayToBinaryString(u8Array) {
     return b_str;
 }
 
+function addReport(report) {
+    RecentReports.push(report);
+    if (RecentReports.length > 8) {
+        RecentReports.shift();
+    }
+}
+
 function addReportWithKeysDown(modifier_keys) {
     NextIdentifier++;
     if (NextIdentifier >= 256) {
@@ -335,13 +342,58 @@ function addReportWithKeysDown(modifier_keys) {
         report.push(keys[i]);
     }
 
-    RecentReports.push(report);
-    if (RecentReports.length > 8) {
-        RecentReports.shift();
+    addReport(report);
+}
+
+var lastMouseReport = null;
+var lastMouseEvent = null;
+
+function addMouseReport(e) {
+    // If video dimensions are currently not set:
+    if (videoWidth <= 0 || videoHeight <= 0) {
+        return; // Abort
     }
+
+    NextIdentifier++;
+    if (NextIdentifier >= 256) {
+        NextIdentifier = 0;
+    }
+
+    // Convert mouse x,y coordinates within the video element to values ranging from 0..32767
+    var x = Math.round(e.clientX * 32767 / videoWidth);
+    var y = Math.round(e.clientY * 32767 / videoHeight);
+    if (x > 32767) {
+        x = 32767;
+    } else if (x < 0) {
+        x = 0;
+    }
+    if (y > 32767) {
+        y = 32767;
+    } else if (y < 0) {
+        y = 0;
+    }
+
+    // 0x85: high bit is set to indicate it is a mouse instead of a keyboard event
+    // 5 means the next 5 bytes are used for the report
+    // x,y bitmath is to send the values in little-endian byte order
+    var report = [NextIdentifier, 0x85, e.buttons, x & 255, (x >> 8) & 255, y & 255, (y >> 8) & 255];
+    addReport(report);
 }
 
 function sendReports() {
+    // If mouse events have happened:
+    if (lastMouseEvent) {
+        // If the last mouse event has moved the cursor since the last report:
+        if (!lastMouseReport ||
+            lastMouseReport.clientX != lastMouseEvent.clientX ||
+            lastMouseReport.clientY != lastMouseEvent.clientY)
+        {
+            // Add a mouse report to the end
+            lastMouseReport = lastMouseEvent;
+            addMouseReport(lastMouseEvent)
+        }
+    }
+
     if (RecentReports.length > 0) {
         var arr = [];
         for (var i = 0; i < RecentReports.length; ++i) {
@@ -382,52 +434,19 @@ function releaseKey(data) {
     sendReports();
 }
 
-var currentMouseButtons = 0;
-
-function addMouseReport(e) {
-    // If video dimensions are currently not set:
-    if (videoWidth <= 0) {
-        return; // Abort
-    }
-
-    NextIdentifier++;
-    if (NextIdentifier >= 256) {
-        NextIdentifier = 0;
-    }
-
-    // Convert mouse x,y coordinates within the video element to values ranging from 0..32767
-    var x = Math.round(e.clientX * 32767 / videoWidth);
-    var y = Math.round(e.clientY * 32767 / videoHeight);
-    if (x > 32767) {
-        x = 32767;
-    } else if (x < 0) {
-        x = 0;
-    }
-    if (y > 32767) {
-        y = 32767;
-    } else if (y < 0) {
-        y = 0;
-    }
-
-    var report = [NextIdentifier, 5, e.buttons, ];
-    for (var i = 0; i < count; ++i) {
-        report.push(keys[i]);
-    }
-
-    RecentReports.push(report);
-    if (RecentReports.length > 8) {
-        RecentReports.shift();
-    }
-}
-
 // Called on any mouse event
 function handleMouse(e) {
     // Note: The event buttons bitfield in the browser is already in the correct
     // USB HID report format.
 
+    lastMouseEvent = e;
+
     // If button state changed:
-    if (currentMouseButtons != e.buttons) {
-        // We need to add a report now.
+    if (!lastMouseReport || lastMouseReport.buttons != e.buttons) {
+        lastMouseReport = e;
+        addMouseReport(e);
+        sendReports();
+        return;
     }
 }
 
