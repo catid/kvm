@@ -2,6 +2,7 @@
 
 #include "kvm_transport.hpp"
 #include "kvm_logger.hpp"
+#include "kvm_serializer.hpp"
 using namespace kvm;
 
 static logger::Channel Logger("MouseTest");
@@ -25,13 +26,17 @@ int main(int argc, char* argv[])
     InputTransport transport;
     transport.Mouse = &mouse;
 
-    // Left Click and release
-    uint8_t reports[14] = {
-        0x01, 0x85, 0x00, 0x10, 0x00, 0x10, 0x00,
-        0x02, 0x85, 0x00, 0x10, 0x00, 0x10, 0x00,
+    srand(GetTimeUsec());
+
+    uint8_t reports[7] = {
+        0x01, 0x85, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
-    if (!transport.ParseReports(reports, 14)) {
+    // Move cursor to a random position
+    WriteU16_LE(reports + 3, rand() % 32768);
+    WriteU16_LE(reports + 5, rand() % 32768);
+
+    if (!transport.ParseReports(reports, 7)) {
         Logger.Error("ParseReports failed");
         return kAppFail;
     }

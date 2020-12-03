@@ -26,15 +26,17 @@ function stopBitrateTimer() {
     bitrateTimer = null;
 }
 
+var videoWidth = 0, videoHeight = 0;
+
 function startBitrateTimer() {
     stopBitrateTimer();
     bitrateTimer = setInterval(function() {
         var bitrate = handle.getBitrate();
         $('#bitrate-text').text(bitrate);
         var video = $("#remotevideo").get(0);
-        var w = video.videoWidth;
-        var h = video.videoHeight;
-        $('#resolution-text').text(w + "x" + h);
+        videoWidth = video.videoWidth;
+        videoHeight = video.videoHeight;
+        $('#resolution-text').text(videoWidth + "x" + videoHeight);
     }, 1000);
 }
 
@@ -380,6 +382,55 @@ function releaseKey(data) {
     sendReports();
 }
 
+var currentMouseButtons = 0;
+
+function addMouseReport(e) {
+    // If video dimensions are currently not set:
+    if (videoWidth <= 0) {
+        return; // Abort
+    }
+
+    NextIdentifier++;
+    if (NextIdentifier >= 256) {
+        NextIdentifier = 0;
+    }
+
+    // Convert mouse x,y coordinates within the video element to values ranging from 0..32767
+    var x = Math.round(e.clientX * 32767 / videoWidth);
+    var y = Math.round(e.clientY * 32767 / videoHeight);
+    if (x > 32767) {
+        x = 32767;
+    } else if (x < 0) {
+        x = 0;
+    }
+    if (y > 32767) {
+        y = 32767;
+    } else if (y < 0) {
+        y = 0;
+    }
+
+    var report = [NextIdentifier, 5, e.buttons, ];
+    for (var i = 0; i < count; ++i) {
+        report.push(keys[i]);
+    }
+
+    RecentReports.push(report);
+    if (RecentReports.length > 8) {
+        RecentReports.shift();
+    }
+}
+
+// Called on any mouse event
+function handleMouse(e) {
+    // Note: The event buttons bitfield in the browser is already in the correct
+    // USB HID report format.
+
+    // If button state changed:
+    if (currentMouseButtons != e.buttons) {
+        // We need to add a report now.
+    }
+}
+
 function startCapture() {
     $(document).keydown(function(event){
         event.preventDefault();
@@ -390,21 +441,40 @@ function startCapture() {
         releaseKey(convertKey(event));
     });
 
-    $(document).mouseup(function(event){
+    // Disable unused events
+    $("#remotevideo").mouseover(function(event){
         event.preventDefault();
     });
-    $(document).mousedown(function(event){
+    $("#remotevideo").mouseenter(function(event){
         event.preventDefault();
     });
-    $(document).mouseover(function(event){
+    $("#remotevideo").mouseleave(function(event){
         event.preventDefault();
     });
+    $("#remotevideo").mouseout(function(event){
+        event.preventDefault();
+    });
+
+    // Mouse input events
+    $("#remotevideo").mouseup(function(event){
+        event.preventDefault();
+        handleMouse(event);
+    });
+    $("#remotevideo").mousedown(function(event){
+        event.preventDefault();
+        handleMouse(event);
+    });
+    $("#remotevideo").mousemove(function(event){
+        event.preventDefault();
+        handleMouse(event);
+    });
+
+    // Disable selecting text on the site,
+    // and avoid interacting with the video controls.
     $(document).click(function(event){
-        // Disable left click
         event.preventDefault();
     });
     $(document).contextmenu(function(event){
-        // Disable right-click (causes video to show properties menu)
         event.preventDefault();
     });
 
@@ -422,8 +492,8 @@ function startCapture() {
         releaseKey([0, 227]);
     });
 
-    // Send reports every 60 milliseconds -> ~500 bytes/second.
-    // This is done to fill in for lost packets.
+    // Send reports every 60 milliseconds.
+    // This is done to fill in for lost packets and to update mouse position.
     SendTimer = setInterval(function() {
         sendReports();
     }, 60);
