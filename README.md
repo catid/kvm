@@ -4,6 +4,8 @@ Provides secure [out-of-band](https://en.wikipedia.org/wiki/Out-of-band_manageme
 
 By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target remotely, as if you were sitting at the target with a keyboard and mouse attached.  You will be able to access the BIOS and boot menus of the device remotely.
 
+[Project Video](https://www.youtube.com/watch?v=X4b9830Ifjo)
+
 Features:
 
 * The browser displays video from the target device.
