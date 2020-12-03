@@ -31,6 +31,8 @@ Features:
 
 Navigate to https://kvm.local/ to access the KVM web app.
 
+![Example Usage](https://github.com/catid/kvm/raw/master/art/example_usage.png "Example Usage")
+
 
 ## Hardware Required
 
