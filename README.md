@@ -54,9 +54,9 @@ The software is compatible with this fanless heatsink case and will not cause it
 
 Recommended additional hardware:
 
-The TinyPilot project has built a power/data splitter that is super useful when working with target devices that cannot supply full power to the Raspberry Pi.  This splitter requires two additional Micro USB cables.
+When working with target devices that cannot supply full power to the Raspberry Pi over the USB-C cable, you can use a splitter:
 
-* Power/Data Splitter: https://tinypilotkvm.com/product/tinypilot-power-connector
+* Power/Data Splitter: https://www.pishop.us/product/usb-pwr-splitter/
 * 2x Micro USB to USB-A Adapter Cable (3 Feet, or shorter): https://www.amazon.com/dp/B01JPDTZXK
 
 
