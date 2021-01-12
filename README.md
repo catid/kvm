@@ -1,4 +1,4 @@
-# ![Logo](https://github.com/catid/kvm/raw/master/art/logo_44.png "Logo") Low-Latency IP KVM using Raspberry Pi 4
+# ![Logo](https://github.com/catid/kvm/raw/master/art/logo_44.png "Logo") Low-Bandwidth IP KVM using Raspberry Pi 4
 
 Provides secure [out-of-band](https://en.wikipedia.org/wiki/Out-of-band_management) remote management of IT assets, for under $100.
 
