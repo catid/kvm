@@ -102,7 +102,7 @@ Build and install the KVM software in the SSH session:
 
 ```
 cd ~
-git clone git@github.com:catid/kvm.git
+git clone https://github.com/catid/kvm.git
 cd kvm
 
 sudo apt install janus janus-dev cmake g++ libglib2.0-dev
