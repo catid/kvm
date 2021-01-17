@@ -2,7 +2,7 @@
 
 Provides secure [out-of-band](https://en.wikipedia.org/wiki/Out-of-band_management) remote management of IT assets, for under $100.
 
-This is the first Raspberry Pi KVM project to implement WebRTC video streaming to the browser, reducing bandwidth by 10x and allowing for access to LAN assets over VPN instead of requiring local WiFi connection.
+This is the first Raspberry Pi KVM project to implement WebRTC video streaming to the browser, reducing bandwidth by 15x or more, and allowing for access to LAN assets over VPN instead of requiring local WiFi connection.
 
 By connecting your Raspberry Pi 4 to the HDMI and USB ports of a target device, you can use a web browser to access the target remotely, as if you were sitting at the target with a keyboard and mouse attached.  You will be able to access the BIOS and boot menus of the device remotely.
 
