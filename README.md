@@ -59,6 +59,7 @@ Recommended additional hardware:
 When working with target devices that cannot supply full power to the Raspberry Pi over the USB-C cable, you can use a splitter:
 
 * Power/Data Splitter: https://www.pishop.us/product/usb-pwr-splitter/
+* Another Splitter: https://tinypilotkvm.com/product/tinypilot-power-connector
 * 2x Micro USB to USB-A Adapter Cable (3 Feet, or shorter): https://www.amazon.com/dp/B01JPDTZXK
 
 
