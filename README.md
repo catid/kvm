@@ -114,7 +114,7 @@ cd kvm
 
 mkdir build
 cd build
-cmake ../..
+cmake ../
 make -j4
 
 cd /home/pi/kvm/scripts/
