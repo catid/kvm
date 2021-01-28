@@ -105,7 +105,7 @@ Build and install the KVM software in the SSH session:
 
 ```shell
 sudo apt update
-sudo apt install -y git janus janus-dev cmake g++ libglib2.0-dev
+sudo apt install -y git janus janus-dev cmake g++ libglib2.0-dev libturbojpeg0-dev
 sudo systemctl disable janus
 
 cd ~
