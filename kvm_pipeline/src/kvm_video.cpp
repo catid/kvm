@@ -421,6 +421,8 @@ std::string RtpPayloader::GenerateSDP() const
     oss << "m=video 1 RTP/SAVPF 96\r\n";
     oss << "c=IN IP4 0.0.0.0\r\n";
     oss << "a=rtpmap:96 H264/90000\r\n";
+    oss << "a=fmtp:96 profile-level-id=42E01F\r\n";
+    oss << "a=fmtp:96 packetization-mode=1\r\n";
     oss << "a=fmtp:96 sprop-sps=" << sps_b64.data() << "\r\n";
     oss << "a=fmtp:96 sprop-pps=" << pps_b64.data() << "\r\n";
     oss << "a=rtcp-fb:96 nack\r\n";
