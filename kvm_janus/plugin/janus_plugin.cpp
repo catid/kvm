@@ -334,7 +334,7 @@ void plugin_incoming_rtp(janus_plugin_session* /*handle*/, janus_plugin_rtp */*p
 /*! \brief Method to handle an incoming RTCP packet from a peer
     * @param[in] handle The plugin/gateway session used for this peer
     * @param[in] packet The RTP packet and related data */
-void plugin_incoming_rtcp(janus_plugin_session* /*handle*/, janus_plugin_rtp */*packet*/)
+void plugin_incoming_rtcp(janus_plugin_session* /*handle*/, janus_plugin_rtcp */*packet*/)
 {
     //Logger.Info("plugin_incoming_rtcp: Ignored");
 }
@@ -375,7 +375,7 @@ void plugin_incoming_data(janus_plugin_session* handle, janus_plugin_data *packe
 
     // Convert JS string to byte array
     std::vector<uint8_t> data;
-    Invert_convertUint8ArrayToBinaryString(buf, len, data);
+    Invert_convertUint8ArrayToBinaryString((const char*)buf, len, data);
 
     if (!client_data->Transport.ParseReports(data.data(), (int)data.size())) {
         Logger.Error("ParseReports failed for len=", len, ": ", HexDump(data.data(), (int)data.size()));
