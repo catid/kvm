@@ -48,6 +48,7 @@ find_path(MMAL_PATH REQUIRED
         mmal.h
     HINTS
         /opt/vc/include/interface/mmal/
+        /usr/include/interface/mmal/
 )
 message("MMAL_PATH: ${MMAL_PATH}")
 
