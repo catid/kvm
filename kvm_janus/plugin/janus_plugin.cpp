@@ -71,7 +71,11 @@ int plugin_init(janus_callbacks* callback, const char* /*config_path*/)
         {
             for (auto& client : m_Clients) {
                 if (client->transmit) {
-                    m_Callbacks->relay_rtp(client->handle, 1, (char*)rtp_data, rtp_bytes);
+                    janus_plugin_rtp rtp;
+                    rtp.video = 1;
+                    rtp.buffer = (char*)rtp_data;
+                    rtp.length = (uint16_t)rtp_bytes;
+                    m_Callbacks->relay_rtp(client->handle, &rtp);
                 }
             }
         });
