@@ -125,6 +125,13 @@ sudo sync
 sudo reboot now
 ```
 
+On older versions of Raspberry Pi OS, the `make -j4` step will fail.  This is because the janus-dev package API changed.  To build on older Raspberry Pis, check out the special branch for this case, and then attempt to build again:
+
+```
+git checkout old-janus
+make -j4
+```
+
 When the Raspberry Pi reboots, it will be hosting the KVM services.  You can view the logs by connecting to `ssh pi@kvm.local` with password `raspberry`, and then entering `sudo journalctl -fu kvm_webrtc -n 10000`
 
 
