@@ -294,6 +294,15 @@ struct janus_plugin_result* plugin_handle_message(janus_plugin_session* handle, 
     return result;
 }
 
+/*! \brief Method to handle an incoming Admin API message/request
+    * @param[in] message The json_t object containing the message/request JSON
+    * @returns A json_t instance containing the response */
+struct json_t *plugin_admin_message(json_t */*message*/)
+{
+    Logger.Info("plugin_admin_message: Ignored");
+    return json_string("AdminResponseHere");
+}
+
 /*! \brief Callback to be notified when the associated PeerConnection is up and ready to be used
     * @param[in] handle The plugin/gateway session used for this peer */
 void plugin_setup_media(janus_plugin_session* handle)
@@ -312,20 +321,16 @@ void plugin_setup_media(janus_plugin_session* handle)
 
 /*! \brief Method to handle an incoming RTP packet from a peer
     * @param[in] handle The plugin/gateway session used for this peer
-    * @param[in] video Whether this is an audio or a video frame
-    * @param[in] buf The packet data (buffer)
-    * @param[in] len The buffer lenght */
-void plugin_incoming_rtp(janus_plugin_session* /*handle*/, int /*video*/, char* /*buf*/, int /*len*/)
+    * @param[in] packet The RTP packet and related data */
+void plugin_incoming_rtp(janus_plugin_session* /*handle*/, janus_plugin_rtp */*packet*/)
 {
     Logger.Info("plugin_incoming_rtp: Ignored");
 }
 
 /*! \brief Method to handle an incoming RTCP packet from a peer
     * @param[in] handle The plugin/gateway session used for this peer
-    * @param[in] video Whether this is related to an audio or a video stream
-    * @param[in] buf The message data (buffer)
-    * @param[in] len The buffer lenght */
-void plugin_incoming_rtcp(janus_plugin_session* /*handle*/, int /*video*/, char* /*buf*/, int /*len*/)
+    * @param[in] packet The RTP packet and related data */
+void plugin_incoming_rtcp(janus_plugin_session* /*handle*/, janus_plugin_rtp */*packet*/)
 {
     //Logger.Info("plugin_incoming_rtcp: Ignored");
 }
@@ -335,10 +340,12 @@ void plugin_incoming_rtcp(janus_plugin_session* /*handle*/, int /*video*/, char*
     * DataChannels send unterminated strings, so you'll have to terminate them with a \0 yourself to
     * use them.
     * @param[in] handle The plugin/gateway session used for this peer
-    * @param[in] buf The message data (buffer)
-    * @param[in] len The buffer lenght */
-void plugin_incoming_data(janus_plugin_session* handle, char* buf, int len)
+    * @param[in] packet The message data and related info */
+void plugin_incoming_data(janus_plugin_session* handle, janus_plugin_data *packet)
 {
+    const uint8_t* buf = reinterpret_cast<const uint8_t*>( packet->buffer );
+    int len = static_cast<int>( packet->length );
+
     if (len <= 1) {
         return;
     }
@@ -371,6 +378,15 @@ void plugin_incoming_data(janus_plugin_session* handle, char* buf, int len)
     }
 }
 
+/*! \brief Method to be notified about the fact that the datachannel is ready to be written
+    * \note This is not only called when the PeerConnection first becomes available, but also
+    * when the SCTP socket becomes writable again, e.g., because the internal buffer is empty.
+    * @param[in] handle The plugin/gateway session used for this peer */
+void plugin_data_ready(janus_plugin_session */*handle*/)
+{
+    //Logger.Info("plugin_data_ready Ignored");
+}
+
 /*! \brief Method to be notified by the core when too many NACKs have
     * been received or sent by Janus, and so a slow or potentially
     * unreliable network is to be expected for this peer
@@ -387,7 +403,7 @@ void plugin_incoming_data(janus_plugin_session* handle, char* buf, int len)
     * @param[in] uplink Whether this is related to the uplink (Janus to peer)
     * or downlink (peer to Janus)
     * @param[in] video Whether this is related to an audio or a video stream */
-void plugin_slow_link(janus_plugin_session* /*handle*/, int uplink, int video)
+void plugin_slow_link(janus_plugin_session* /*handle*/, gboolean uplink, gboolean video)
 {
     Logger.Info("plugin_slow_link: uplink=", uplink, " video=", video);
 }
@@ -448,10 +464,12 @@ janus_plugin m_Plugin = {
     &plugin_get_package,
     &plugin_create_session,
     &plugin_handle_message,
+    &plugin_admin_message,
     &plugin_setup_media,
     &plugin_incoming_rtp,
     &plugin_incoming_rtcp,
     &plugin_incoming_data,
+    &plugin_data_ready,
     &plugin_slow_link,
     &plugin_hangup_media,
     &plugin_destroy_session,
