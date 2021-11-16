@@ -293,7 +293,6 @@ void VideoPipeline::Start()
                     ErrorState = true;
                     return;
                 }
-                Logger.Error("Video output bytes=", bytes);
                 if (bytes == 0) {
                     // No image in frame
                     return;
