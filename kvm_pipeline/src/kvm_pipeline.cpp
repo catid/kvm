@@ -179,6 +179,58 @@ void VideoPipeline::Shutdown()
     JoinThread(Thread);
 }
 
+static void ConvertYUYVtoYUV420(std::shared_ptr<CameraFrame> input, std::shared_ptr<Frame> output)
+{
+    uint8_t* dst_y_row = output->Planes[0];
+    uint8_t* dst_u_row = output->Planes[1];
+    uint8_t* dst_v_row = output->Planes[2];
+    const uint8_t* src = input->Image;
+
+    const int w = output->Width;
+    const int h = output->Height;
+    const int src_row_bytes = input->Format.RowBytes;
+
+    for (int y = 0; y < h; y += 2) {
+        // Even rows:
+        const uint8_t* src_row = src;
+        for (int x = 0; x < w; x += 2) {
+            const uint8_t y0 = src_row[0];
+            const uint8_t cb = src_row[1];
+            const uint8_t y1 = src_row[2];
+            const uint8_t cr = src_row[3];
+            src_row += 4;
+
+            dst_y_row[x] = y0;
+            dst_y_row[x + 1] = y1;
+            dst_u_row[x/2] = cb;
+            dst_v_row[x/2] = cr;
+        }
+        src += src_row_bytes;
+
+        dst_y_row += w;
+
+        // Odd rows:
+        src_row = src;
+        for (int x = 0; x < w; x += 2) {
+            const uint8_t y0 = src_row[0];
+            const uint8_t cb = src_row[1];
+            const uint8_t y1 = src_row[2];
+            const uint8_t cr = src_row[3];
+            src_row += 4;
+
+            dst_y_row[x] = y0;
+            dst_y_row[x + 1] = y1;
+            dst_u_row[x/2] = static_cast<uint8_t>( ((unsigned)cb + (unsigned)dst_u_row[x/2]) / 2 );
+            dst_v_row[x/2] = static_cast<uint8_t>( ((unsigned)cr + (unsigned)dst_v_row[x/2]) / 2 );
+        }
+        src += src_row_bytes;
+
+        dst_y_row += w;
+        dst_u_row += w/2;
+        dst_v_row += w/2;
+    }
+}
+
 void VideoPipeline::Start()
 {
     const int max_queue_depth = 4;
@@ -217,19 +269,11 @@ void VideoPipeline::Start()
                     return;
                 }
             } else {
-                frame = RawPool.Allocate(buffer->Format.Width, buffer->Format.Height, buffer->Format.Format);
+                frame = RawPool.Allocate(buffer->Format.Width, buffer->Format.Height, PixelFormat::YUV420P);
+
                 if (buffer->Format.Format == PixelFormat::YUYV) {
-                    uint8_t* dest = frame->Planes[0];
-                    const uint8_t* src = buffer->Image;
-
-                    const int dest_row_bytes = frame->Width * 2;
-                    const int src_row_bytes = buffer->Format.RowBytes;
-
-                    for (int i = 0; i < frame->Height; ++i) {
-                        memcpy(dest, src, dest_row_bytes);
-                        dest += dest_row_bytes;
-                        src += src_row_bytes;
-                    }
+                    // YUYV format is not supported by video encoder so we need to convert to YUV420
+                    ConvertYUYVtoYUV420(buffer, frame);
                 } else {
                     Logger.Error("FIXME: Unsupported copy for raw pixel format");
                     return;
