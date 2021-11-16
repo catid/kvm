@@ -69,6 +69,18 @@ std::shared_ptr<Frame> FramePool::Allocate(int w, int h, PixelFormat format)
         return frame;
     }
 
+    if (format == PixelFormat::YUYV) {
+        frame->AllocatedBytes = w * h * 2;
+        uint8_t* data = AlignedAllocate(frame->AllocatedBytes);
+        if (!data) {
+            Logger.Error("Out of memory: Unable to allocate more raw frames");
+            return nullptr;
+        }
+        frame->Planes[0] = data;
+        frame->Planes[1] = frame->Planes[2] = nullptr;
+        return frame;
+    }
+
     int y_plane_bytes = w * h, uv_plane_bytes = 0;
     if (format == PixelFormat::YUV420P) {
         uv_plane_bytes = y_plane_bytes / 4;

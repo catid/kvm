@@ -5,6 +5,7 @@
 */
 
 #include "kvm_core.hpp"
+#include "kvm_frame.hpp"
 
 #include <linux/videodev2.h>
 
@@ -43,6 +44,15 @@ struct CameraBuffer
     std::atomic<bool> AppOwns = ATOMIC_VAR_INIT(false);
 };
 
+struct FormatInfo
+{
+    PixelFormat Format = PixelFormat::Invalid;
+
+    int Width = 0;
+    int RowBytes = 0; // stride/pitch
+    int Height = 0;
+};
+
 struct CameraFrame
 {
     // Returns frame to V4L2Capture object when it goes out of scope
@@ -60,6 +70,8 @@ struct CameraFrame
     unsigned ImageBytes = 0;
 
     std::function<void()> ReleaseFunc;
+
+    FormatInfo Format;
 };
 
 
@@ -97,8 +109,11 @@ protected:
     std::atomic<bool> ErrorState = ATOMIC_VAR_INIT(false);
     std::shared_ptr<std::thread> Thread;
 
+    FormatInfo Format;
+
     void Loop();
 
+    bool ReadFormat();
     bool RequestBuffers(unsigned count);
     bool QueueBuffer(unsigned index);
     bool AcquireFrame();

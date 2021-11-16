@@ -151,6 +151,9 @@ protected:
 
     PiplineStatistics Stats;
 
+    // Raw format image pool
+    FramePool RawPool;
+
     void Start();
     void Stop();
     void Loop();

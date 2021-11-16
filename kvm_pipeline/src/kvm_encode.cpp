@@ -32,7 +32,7 @@ static bool mmalInit()
     return true;
 }
 
-static void mmalCallback(MMAL_WRAPPER_T* encoder)
+static void mmalCallback(MMAL_WRAPPER_T* /*encoder*/)
 {
     vcos_semaphore_post(&m_encoder_sem);
 }

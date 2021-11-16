@@ -206,17 +206,41 @@ void VideoPipeline::Start()
                 Logger.Warn("Camera skipped ", frame_number - LastFrameNumber, " frames");
             }
 
-            auto frame = Decoder.Decompress(buffer->Image, buffer->ImageBytes);
-            if (!frame) {
-                // Note that JPEG decode failures happen a lot when plugged into USB2 ports,
-                // so this is not a critical error.
-                Logger.Error("Failed to decode JPEG");
-                return;
+            std::shared_ptr<Frame> frame;
+
+            if (buffer->Format.Format == PixelFormat::JPEG) {
+                frame = Decoder.Decompress(buffer->Image, buffer->ImageBytes);
+                if (!frame) {
+                    // Note that JPEG decode failures happen a lot when plugged into USB2 ports,
+                    // so this is not a critical error.
+                    Logger.Error("Failed to decode JPEG");
+                    return;
+                }
+            } else {
+                frame = RawPool.Allocate(buffer->Format.Width, buffer->Format.Height, buffer->Format.Format);
+                if (buffer->Format.Format == PixelFormat::YUYV) {
+                    uint8_t* dest = frame->Planes[0];
+                    const uint8_t* src = buffer->Image;
+
+                    const int dest_row_bytes = frame->Width * 2;
+                    const int src_row_bytes = buffer->Format.RowBytes;
+
+                    for (int i = 0; i < frame->Height; ++i) {
+                        memcpy(dest, src, dest_row_bytes);
+                        dest += dest_row_bytes;
+                        src += src_row_bytes;
+                    }
+                } else {
+                    Logger.Error("FIXME: Unsupported copy for raw pixel format");
+                    return;
+                }
             }
 
             Stats.AddInput(buffer->ImageBytes);
 
-            EncoderNode.Queue([this, frame, frame_number, shutter_usec]()
+            PixelFormat pf = buffer->Format.Format;
+
+            EncoderNode.Queue([this, pf, frame, frame_number, shutter_usec]()
             {
                 int bytes = 0;
                 uint8_t* data = Encoder.Encode(frame, false, bytes);
@@ -229,7 +253,11 @@ void VideoPipeline::Start()
                     // No image in frame
                     return;
                 }
-                Decoder.Release(frame);
+                if (pf == PixelFormat::JPEG) {
+                    Decoder.Release(frame);
+                } else {
+                    RawPool.Release(frame);
+                }
 
                 Stats.AddVideo(bytes);
 

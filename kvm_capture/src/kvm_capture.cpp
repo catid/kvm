@@ -37,6 +37,16 @@ int safe_ioctl(int fd, unsigned request, void* arg)
     return r;
 }
 
+static std::string PixelFormatToString(uint32_t pf)
+{
+    char fmt[5] = {};
+    fmt[0] = static_cast<uint8_t>( pf );
+    fmt[1] = static_cast<uint8_t>( pf >> 8 );
+    fmt[2] = static_cast<uint8_t>( pf >> 16 );
+    fmt[3] = static_cast<uint8_t>( pf >> 24 );
+    return fmt;
+}
+
 
 //------------------------------------------------------------------------------
 // V4L2
@@ -75,6 +85,12 @@ bool V4L2Capture::Initialize(FrameHandler handler)
             if (safe_ioctl(fd, VIDIOC_ENUMINPUT, &vin) >= 0) {
                 if (vin.status == 0) {
                     Logger.Info("Video ", devices[index], " input ", input, " (", vin.name, ": OK)");
+
+                    // Require successful format read
+                    if (!ReadFormat()) {
+                        continue;
+                    }
+
                     break;
                 }
 
@@ -143,6 +159,42 @@ bool V4L2Capture::Initialize(FrameHandler handler)
     Thread = std::make_shared<std::thread>(&V4L2Capture::Loop, this);
 
     fail_scope.Cancel();
+    return true;
+}
+
+bool V4L2Capture::ReadFormat()
+{
+    v4l2_format format{};
+    format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+    if (safe_ioctl(fd, VIDIOC_G_FMT, &format) >= 0) {
+        Format.Width = format.fmt.pix.width;
+        Format.Height = format.fmt.pix.height;
+        Format.RowBytes = format.fmt.pix.bytesperline;
+
+        switch (format.fmt.pix.pixelformat) {
+        case V4L2_PIX_FMT_YUYV:
+            Format.Format = PixelFormat::YUYV;
+            break;
+        case V4L2_PIX_FMT_NV12:
+            Format.Format = PixelFormat::NV12;
+            break;
+        case V4L2_PIX_FMT_YUV420:
+            Format.Format = PixelFormat::YUV420P;
+            break;
+        case V4L2_PIX_FMT_JPEG:
+            Format.Format = PixelFormat::JPEG;
+            break;
+        default:
+            Logger.Error("FIXME: Unsupported pixel format: ", PixelFormatToString(format.fmt.pix.pixelformat));
+            return false;
+        }
+    } else {
+        Logger.Error("VIDIOC_G_FMT failed");
+        return false;
+    }
+
+    Logger.Info("Detected pixel format: ", PixelFormatToString(format.fmt.pix.pixelformat), ". Resolution: ", Format.Width, "x", Format.Height, " pixels. Stride=", Format.RowBytes, " bytes");
     return true;
 }
 
@@ -353,6 +405,7 @@ bool V4L2Capture::AcquireFrame()
     frame->ReleaseFunc = [this, index]() {
         QueueBuffer(index);
     };
+    frame->Format = Format;
 
     Handler(frame);
     return true;

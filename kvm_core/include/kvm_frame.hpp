@@ -20,10 +20,16 @@ namespace kvm {
 
 enum class PixelFormat
 {
-    YUV420P,
-    YUV422P,
-    YUYV,
-    NV12,
+    Invalid,
+
+    // Compressed formats:
+    JPEG,       // JPEG compressed images
+
+    // Raw formats:
+    YUV420P,    // 4:2:0 three planes: Y, U, V
+    YUV422P,    // 4:2:2 three planes: Y, U, V
+    YUYV,       // 4:2:2 single plane
+    NV12,       // 4:2:0 two planes: Y, interleaved UV
     RGB24,
 };
 
