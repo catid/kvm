@@ -90,6 +90,14 @@ find_library(MMAL_CORE_LIB REQUIRED
 )
 message("MMAL_CORE_LIB: ${MMAL_CORE_LIB}")
 
+find_library(MMAL_CLIENT_LIB REQUIRED
+    NAMES
+        mmal_vc_client
+    HINTS
+        /opt/vc/lib/
+)
+message("MMAL_CLIENT_LIB: ${MMAL_CLIENT_LIB}")
+
 find_library(VCOS_LIB REQUIRED
     NAMES
         vcos

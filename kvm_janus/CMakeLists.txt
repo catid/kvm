@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(kvm_janus LANGUAGES CXX)
 
+# Fix issue with mmal linkage: https://github.com/raspberrypi/userland/issues/178
+SET( CMAKE_LINK_WHAT_YOU_USE TRUE )
+
 
 ################################################################################
 # Dependencies

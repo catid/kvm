@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(kvm_pipeline LANGUAGES CXX)
 
+# Fix issue with mmal linkage: https://github.com/raspberrypi/userland/issues/178
+SET( CMAKE_LINK_WHAT_YOU_USE TRUE )
+
 
 ################################################################################
 # Source
@@ -24,7 +27,7 @@ set(SOURCE_FILES
 
 # kvm_pipeline library
 
-add_library(kvm_pipeline ${SOURCE_FILES})
+add_library(kvm_pipeline SHARED ${SOURCE_FILES})
 target_include_directories(kvm_pipeline
     PUBLIC
         include
@@ -39,6 +42,7 @@ target_link_libraries(kvm_pipeline
         ${MMAL_LIB}
         ${MMAL_CORE_LIB}
         ${MMAL_UTIL_LIB}
+        ${MMAL_CLIENT_LIB}
         ${VCOS_LIB}
         ${BCM_HOST_LIB}
 )

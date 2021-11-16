@@ -249,6 +249,7 @@ void VideoPipeline::Start()
                     ErrorState = true;
                     return;
                 }
+                Logger.Error("Video output bytes=", bytes);
                 if (bytes == 0) {
                     // No image in frame
                     return;
@@ -266,7 +267,8 @@ void VideoPipeline::Start()
                 Parser.ParseVideo(false, data, bytes);
 
                 if (Parser.Pictures.empty()) {
-                    Logger.Error("Video output does not include a picture");
+                    Logger.Error("Video output does not include a picture: bytes=", bytes);
+                    //Logger.Error("Dump: ", HexDump(data, bytes > 128 ? 128 : bytes));
                     return;
                 }
 
