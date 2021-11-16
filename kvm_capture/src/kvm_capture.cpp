@@ -182,7 +182,8 @@ bool V4L2Capture::ReadFormat()
         case V4L2_PIX_FMT_YUV420:
             Format.Format = PixelFormat::YUV420P;
             break;
-        case V4L2_PIX_FMT_JPEG:
+        case V4L2_PIX_FMT_JPEG: // fall-thru
+        case V4L2_PIX_FMT_MJPG:
             Format.Format = PixelFormat::JPEG;
             break;
         default:
